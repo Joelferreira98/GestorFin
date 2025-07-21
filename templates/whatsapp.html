@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fab fa-whatsapp me-2"></i>Gestão WhatsApp</h2>
+            <p class="text-muted">Configure instâncias, envie mensagens e gerencie lembretes automáticos</p>
+        </div>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Instâncias Ativas</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ instances|selectattr('status', 'equalto', 'connected')|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-mobile-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Mensagens Enviadas</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ messages|selectattr('0.status', 'equalto', 'sent')|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-paper-plane fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Lembretes Ativos</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ reminders|selectattr('is_active', 'equalto', true)|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bell fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Mensagens Falharam</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ messages|selectattr('0.status', 'equalto', 'failed')|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="whatsappTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="instances-tab" data-bs-toggle="tab" data-bs-target="#instances" type="button" role="tab">
+                <i class="fas fa-mobile-alt me-1"></i>Instâncias
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages-content" type="button" role="tab">
+                <i class="fas fa-comments me-1"></i>Mensagens
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reminders-tab" data-bs-toggle="tab" data-bs-target="#reminders-content" type="button" role="tab">
+                <i class="fas fa-bell me-1"></i>Lembretes
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="whatsappTabsContent">
+        <!-- Instances Tab -->
+        <div class="tab-pane fade show active" id="instances" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Instâncias WhatsApp</h6>
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addInstanceModal">
+                        <i class="fas fa-plus me-1"></i>Nova Instância
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if instances %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome da Instância</th>
+                                    <th>Número</th>
+                                    <th>Status</th>
+                                    <th>Criado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for instance in instances %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                <i class="fab fa-whatsapp text-white"></i>
+                                            </div>
+                                            <strong>{{ instance.instance_name }}</strong>
+                                        </div>
+                                    </td>
+                                    <td>{{ instance.phone_number or '-' }}</td>
+                                    <td>
+                                        {% if instance.status == 'connected' %}
+                                            <span class="badge bg-success">Conectado</span>
+                                        {% elif instance.status == 'connecting' %}
+                                            <span class="badge bg-warning">Conectando</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Desconectado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ instance.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('whatsapp.delete_instance', instance_id=instance.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta instância?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fab fa-whatsapp fa-3x text-muted mb-3"></i>
+                        <h5>Nenhuma instância configurada</h5>
+                        <p class="text-muted">Crie uma instância para começar a enviar mensagens</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages Tab -->
+        <div class="tab-pane fade" id="messages-content" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Enviar Mensagem</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('whatsapp.send_message') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="client_id" class="form-label">Cliente</label>
+                                    <select class="form-select" id="client_id" name="client_id" required>
+                                        <option value="">Selecione um cliente</option>
+                                        {% for client in clients %}
+                                        <option value="{{ client.id }}">{{ client.name }} - {{ client.whatsapp or 'Sem WhatsApp' }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="message_type" class="form-label">Tipo de Mensagem</label>
+                                    <select class="form-select" id="message_type" name="message_type">
+                                        <option value="manual">Manual</option>
+                                        <option value="reminder">Lembrete</option>
+                                        <option value="confirmation">Confirmação</option>
+                                        <option value="follow_up">Follow-up</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensagem</label>
+                            <textarea class="form-control" id="message" name="message" rows="4" required placeholder="Digite sua mensagem..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fab fa-whatsapp me-1"></i>Enviar Mensagem
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Messages History -->
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Histórico de Mensagens</h6>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Tipo</th>
+                                    <th>Mensagem</th>
+                                    <th>Status</th>
+                                    <th>Enviado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for message, client in messages %}
+                                <tr>
+                                    <td>{{ client.name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ message.message_type }}</span>
+                                    </td>
+                                    <td>{{ message.content[:50] }}{% if message.content|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        {% if message.status == 'sent' %}
+                                            <span class="badge bg-success">Enviado</span>
+                                        {% elif message.status == 'failed' %}
+                                            <span class="badge bg-danger">Falhou</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ message.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <h5>Nenhuma mensagem enviada</h5>
+                        <p class="text-muted">As mensagens enviadas aparecerão aqui</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reminders Tab -->
+        <div class="tab-pane fade" id="reminders-content" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Lembretes Automáticos</h6>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#addReminderModal">
+                        <i class="fas fa-plus me-1"></i>Novo Lembrete
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if reminders %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Horário</th>
+                                    <th>Dias</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reminder in reminders %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ reminder.name }}</strong>
+                                        <br><small class="text-muted">{{ reminder.message[:40] }}...</small>
+                                    </td>
+                                    <td>
+                                        {% if reminder.reminder_type == 'due_date' %}
+                                            <span class="badge bg-info">Vencimento</span>
+                                        {% elif reminder.reminder_type == 'overdue' %}
+                                            <span class="badge bg-danger">Atraso</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Follow-up</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ reminder.time.strftime('%H:%M') }}</td>
+                                    <td>
+                                        {% if reminder.days > 0 %}
+                                            {{ reminder.days }} dias antes
+                                        {% elif reminder.days == 0 %}
+                                            No vencimento
+                                        {% else %}
+                                            {{ -reminder.days }} dias após
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if reminder.is_active %}
+                                            <span class="badge bg-success">Ativo</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inativo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <form method="POST" action="{{ url_for('whatsapp.toggle_reminder', reminder_id=reminder.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm {% if reminder.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if reminder.is_active %}Desativar{% else %}Ativar{% endif %}">
+                                                    <i class="fas {% if reminder.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('whatsapp.delete_reminder', reminder_id=reminder.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover este lembrete?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                        <h5>Nenhum lembrete configurado</h5>
+                        <p class="text-muted">Configure lembretes automáticos para suas contas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Instance Modal -->
+<div class="modal fade" id="addInstanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('whatsapp.add_instance') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-mobile-alt me-2"></i>Nova Instância WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="instance_name" class="form-label">Nome da Instância *</label>
+                        <input type="text" class="form-control" id="instance_name" name="instance_name" required placeholder="Ex: principal, vendas, suporte">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone_number" class="form-label">Número do WhatsApp *</label>
+                        <input type="text" class="form-control" id="phone_number" name="phone_number" required placeholder="5511999999999">
+                        <small class="text-muted">Formato: código do país + DDD + número (sem espaços ou símbolos)</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Importante:</strong> Após criar a instância, você receberá um QR Code para conectar seu WhatsApp.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>Criar Instância
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Reminder Modal -->
+<div class="modal fade" id="addReminderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('whatsapp.add_reminder') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2"></i>Novo Lembrete Automático</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reminder_name" class="form-label">Nome do Lembrete *</label>
+                        <input type="text" class="form-control" id="reminder_name" name="name" required placeholder="Ex: Lembrete 3 dias antes">
+                    </div>
+                    <div class="mb-3">
+                        <label for="reminder_type" class="form-label">Tipo de Lembrete *</label>
+                        <select class="form-select" id="reminder_type" name="reminder_type" required>
+                            <option value="due_date">Vencimento</option>
+                            <option value="overdue">Atraso</option>
+                            <option value="follow_up">Follow-up</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reminder_time" class="form-label">Horário de Envio *</label>
+                                <input type="time" class="form-control" id="reminder_time" name="time" required value="09:00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reminder_days" class="form-label">Dias *</label>
+                                <select class="form-select" id="reminder_days" name="days" required>
+                                    <option value="7">7 dias antes</option>
+                                    <option value="3">3 dias antes</option>
+                                    <option value="1">1 dia antes</option>
+                                    <option value="0">No vencimento</option>
+                                    <option value="-1">1 dia após</option>
+                                    <option value="-3">3 dias após</option>
+                                    <option value="-7">7 dias após</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reminder_message" class="form-label">Mensagem do Lembrete *</label>
+                        <textarea class="form-control" id="reminder_message" name="message" rows="4" required placeholder="Use {cliente}, {valor}, {vencimento} para personalizar a mensagem"></textarea>
+                        <small class="text-muted">Variáveis disponíveis: {cliente}, {valor}, {vencimento}, {descrição}</small>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Nota:</strong> Os lembretes serão processados automaticamente no horário configurado.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i>Salvar Lembrete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Message templates for different types
+const messageTemplates = {
+    reminder: "Olá {cliente}! Sua conta de R$ {valor} vence em {dias} dias. Descrição: {descrição}. Por favor, efetue o pagamento.",
+    confirmation: "Olá {cliente}! Você tem uma venda parcelada para confirmar. Acesse o link enviado para finalizar.",
+    follow_up: "Olá {cliente}! Gostaríamos de saber se você tem alguma dúvida sobre a conta de R$ {valor}.",
+    manual: ""
+};
+
+document.getElementById('message_type').addEventListener('change', function() {
+    const messageTextarea = document.getElementById('message');
+    const template = messageTemplates[this.value];
+    if (template && !messageTextarea.value) {
+        messageTextarea.value = template;
+    }
+});
+
+// Set reminder message templates
+document.getElementById('reminder_type').addEventListener('change', function() {
+    const messageTextarea = document.getElementById('reminder_message');
+    let template = '';
+    
+    switch(this.value) {
+        case 'due_date':
+            template = 'Olá {cliente}! Sua conta de R$ {valor} vence em {dias} dias ({vencimento}). Descrição: {descrição}. Por favor, efetue o pagamento.';
+            break;
+        case 'overdue':
+            template = 'Olá {cliente}! Sua conta de R$ {valor} está em atraso desde {vencimento}. Descrição: {descrição}. Por favor, regularize a situação.';
+            break;
+        case 'follow_up':
+            template = 'Olá {cliente}! Gostaríamos de fazer um follow-up sobre a conta de R$ {valor}. Como podemos ajudar?';
+            break;
+    }
+    
+    if (template && !messageTextarea.value) {
+        messageTextarea.value = template;
+    }
+});
+</script>
+{% endblock %}

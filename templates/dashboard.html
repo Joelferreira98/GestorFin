@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard Financeiro</h2>
+            <p class="text-muted">Visão geral das suas finanças</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card bg-gradient-primary text-white shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total Clientes</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_clients }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card bg-gradient-success text-white shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">A Receber</div>
+                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(receivables_total) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card bg-gradient-warning text-white shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">A Pagar</div>
+                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(payables_total) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card bg-gradient-info text-white shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Receita Mensal</div>
+                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(monthly_revenue) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-left-danger shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Contas em Atraso</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_receivables }} a receber | {{ overdue_payables }} a pagar</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-left-secondary shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Vendas Parceladas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_sales }} pendentes | {{ confirmed_sales }} confirmadas</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-secondary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Contas a Receber vs A Pagar</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="financeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Status das Contas</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimas Contas a Receber</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Vencimento</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for receivable, client in recent_receivables %}
+                                <tr>
+                                    <td>{{ client.name }}</td>
+                                    <td>{{ receivable.description[:30] }}...</td>
+                                    <td>R$ {{ "%.2f"|format(receivable.amount) }}</td>
+                                    <td>{{ receivable.due_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if receivable.status == 'paid' %}
+                                            <span class="badge bg-success">Pago</span>
+                                        {% elif receivable.status == 'overdue' %}
+                                            <span class="badge bg-danger">Atrasado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimas Contas a Pagar</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Fornecedor</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Vencimento</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payable in recent_payables %}
+                                <tr>
+                                    <td>{{ payable.supplier.name if payable.supplier else 'Sem fornecedor' }}</td>
+                                    <td>{{ payable.description[:30] }}...</td>
+                                    <td>R$ {{ "%.2f"|format(payable.amount) }}</td>
+                                    <td>{{ payable.due_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if payable.status == 'paid' %}
+                                            <span class="badge bg-success">Pago</span>
+                                        {% elif payable.status == 'overdue' %}
+                                            <span class="badge bg-danger">Atrasado</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pendente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Finance Chart
+const ctx1 = document.getElementById('financeChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: ['A Receber', 'A Pagar'],
+        datasets: [{
+            label: 'Valor (R$)',
+            data: [{{ receivables_total }}, {{ payables_total }}],
+            backgroundColor: ['#28a745', '#ffc107'],
+            borderColor: ['#1e7e34', '#e0a800'],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Status Chart
+const ctx2 = document.getElementById('statusChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ['Pendentes', 'Em Atraso', 'Pagas'],
+        datasets: [{
+            data: [{{ total_receivables - overdue_receivables }}, {{ overdue_receivables }}, 0],
+            backgroundColor: ['#ffc107', '#dc3545', '#28a745']
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+</script>
+{% endblock %}

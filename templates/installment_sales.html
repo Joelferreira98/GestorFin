@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Vendas Parceladas - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-shopping-cart me-2"></i>Vendas Parceladas</h2>
+                    <p class="text-muted">Gerencie vendas com confirmação digital e parcelamento</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSaleModal">
+                    <i class="fas fa-plus me-1"></i>Nova Venda
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Pendentes</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ sales|selectattr('0.status', 'equalto', 'pending')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Confirmadas</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ sales|selectattr('0.status', 'equalto', 'confirmed')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Aprovadas</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ sales|selectattr('0.status', 'equalto', 'approved')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-thumbs-up fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Rejeitadas</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ sales|selectattr('0.status', 'equalto', 'rejected')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales Table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Vendas Parceladas</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="salesTable">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Descrição</th>
+                            <th>Valor Total</th>
+                            <th>Parcelas</th>
+                            <th>Status</th>
+                            <th>Criado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale, client in sales %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <strong>{{ client.name }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ sale.description }}</td>
+                            <td>
+                                <strong class="text-success">R$ {{ "%.2f"|format(sale.total_amount) }}</strong>
+                                <br><small class="text-muted">{{ "%.2f"|format(sale.total_amount / sale.installments) }} por parcela</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ sale.installments }}x</span>
+                            </td>
+                            <td>
+                                {% if sale.status == 'pending' %}
+                                    <span class="badge bg-warning">Pendente</span>
+                                {% elif sale.status == 'confirmed' %}
+                                    <span class="badge bg-info">Confirmada</span>
+                                {% elif sale.status == 'approved' %}
+                                    <span class="badge bg-success">Aprovada</span>
+                                {% elif sale.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejeitada</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Cancelada</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sale.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    {% if sale.status == 'pending' %}
+                                        <button class="btn btn-sm btn-outline-info" onclick="copyConfirmationLink('{{ url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True) }}')" title="Copiar Link de Confirmação">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <form method="POST" action="{{ url_for('installment_sales.regenerate_token', sale_id=sale.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Regenerar Token">
+                                                <i class="fas fa-sync"></i>
+                                            </button>
+                                        </form>
+                                    {% elif sale.status == 'confirmed' %}
+                                        <button class="btn btn-sm btn-success" onclick="showApprovalModal({{ sale.id }}, '{{ client.name }}', '{{ sale.description }}', {{ sale.total_amount }})" data-bs-toggle="modal" data-bs-target="#approvalModal" title="Aprovar">
+                                            <i class="fas fa-thumbs-up"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="showRejectionModal({{ sale.id }}, '{{ client.name }}', '{{ sale.description }}')" data-bs-toggle="modal" data-bs-target="#rejectionModal" title="Rejeitar">
+                                            <i class="fas fa-thumbs-down"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if sale.status != 'approved' %}
+                                    <form method="POST" action="{{ url_for('installment_sales.delete', sale_id=sale.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta venda?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if sale.status == 'pending' or sale.status == 'confirmed' %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        Link: <a href="{{ url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True) }}" target="_blank" class="text-decoration-none">
+                                            {{ url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)[:50] }}...
+                                        </a>
+                                    </small>
+                                </div>
+                                {% endif %}
+                                
+                                {% if sale.approval_notes %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <strong>Notas:</strong> {{ sale.approval_notes }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sale Modal -->
+<div class="modal fade" id="addSaleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('installment_sales.add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nova Venda Parcelada</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="client_id" class="form-label">Cliente *</label>
+                        <select class="form-select" id="client_id" name="client_id" required>
+                            <option value="">Selecione um cliente</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }} - {{ client.whatsapp or 'Sem WhatsApp' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição *</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="total_amount" class="form-label">Valor Total *</label>
+                        <input type="number" class="form-control" id="total_amount" name="total_amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="installments" class="form-label">Número de Parcelas *</label>
+                        <select class="form-select" id="installments" name="installments" required>
+                            <option value="">Selecione</option>
+                            <option value="2">2x</option>
+                            <option value="3">3x</option>
+                            <option value="4">4x</option>
+                            <option value="5">5x</option>
+                            <option value="6">6x</option>
+                            <option value="8">8x</option>
+                            <option value="10">10x</option>
+                            <option value="12">12x</option>
+                        </select>
+                    </div>
+                    <div id="installmentPreview" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Criar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="approvalForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-thumbs-up me-2"></i>Aprovar Venda</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>Cliente:</strong> <span id="approval_client_name"></span><br>
+                        <strong>Descrição:</strong> <span id="approval_description"></span><br>
+                        <strong>Valor:</strong> R$ <span id="approval_amount"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="approval_notes" class="form-label">Notas da Aprovação</label>
+                        <textarea class="form-control" id="approval_notes" name="approval_notes" rows="3" placeholder="Observações sobre a aprovação..."></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Ao aprovar:</strong> As parcelas serão automaticamente geradas em "Contas a Receber" e o cliente será notificado via WhatsApp.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-thumbs-up me-1"></i>Aprovar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="rejectionForm">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-thumbs-down me-2"></i>Rejeitar Venda</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>Cliente:</strong> <span id="rejection_client_name"></span><br>
+                        <strong>Descrição:</strong> <span id="rejection_description"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rejection_notes" class="form-label">Motivo da Rejeição *</label>
+                        <textarea class="form-control" id="rejection_notes" name="rejection_notes" rows="3" required placeholder="Explique o motivo da rejeição..."></textarea>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Ao rejeitar:</strong> O cliente será notificado via WhatsApp com o motivo da rejeição.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-thumbs-down me-1"></i>Rejeitar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyConfirmationLink(url) {
+    navigator.clipboard.writeText(url).then(function() {
+        showToast('Link copiado para a área de transferência!', 'success');
+    }).catch(function() {
+        showToast('Erro ao copiar link', 'error');
+    });
+}
+
+function showApprovalModal(saleId, clientName, description, amount) {
+    document.getElementById('approvalForm').action = `/sales/approve/${saleId}`;
+    document.getElementById('approval_client_name').textContent = clientName;
+    document.getElementById('approval_description').textContent = description;
+    document.getElementById('approval_amount').textContent = amount.toFixed(2);
+}
+
+function showRejectionModal(saleId, clientName, description) {
+    document.getElementById('rejectionForm').action = `/sales/reject/${saleId}`;
+    document.getElementById('rejection_client_name').textContent = clientName;
+    document.getElementById('rejection_description').textContent = description;
+}
+
+// Calculate installment preview
+document.addEventListener('DOMContentLoaded', function() {
+    const totalAmountInput = document.getElementById('total_amount');
+    const installmentsSelect = document.getElementById('installments');
+    const previewDiv = document.getElementById('installmentPreview');
+    
+    function updatePreview() {
+        const total = parseFloat(totalAmountInput.value) || 0;
+        const installments = parseInt(installmentsSelect.value) || 0;
+        
+        if (total > 0 && installments > 0) {
+            const installmentValue = total / installments;
+            previewDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <strong>Valor por parcela:</strong> R$ ${installmentValue.toFixed(2)}<br>
+                    <strong>Total:</strong> ${installments}x de R$ ${installmentValue.toFixed(2)} = R$ ${total.toFixed(2)}
+                </div>
+            `;
+        } else {
+            previewDiv.innerHTML = '';
+        }
+    }
+    
+    totalAmountInput.addEventListener('input', updatePreview);
+    installmentsSelect.addEventListener('change', updatePreview);
+});
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-users me-2"></i>Gestão de Clientes</h2>
+                    <p class="text-muted">Gerencie seus clientes e informações de contato</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                    <i class="fas fa-plus me-1"></i>Novo Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clients Table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Clientes</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="clientsTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>WhatsApp</th>
+                            <th>Documento</th>
+                            <th>Email</th>
+                            <th>Cidade/Estado</th>
+                            <th>Cadastrado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <strong>{{ client.name }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                {% if client.whatsapp %}
+                                    <a href="https://wa.me/{{ client.whatsapp }}" target="_blank" class="text-success">
+                                        <i class="fab fa-whatsapp me-1"></i>{{ client.whatsapp }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if client.document %}
+                                    <span class="badge bg-secondary">{{ client.document }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ client.email or '-' }}</td>
+                            <td>{{ client.city }}/{{ client.state if client.city and client.state else '-' }}</td>
+                            <td>{{ client.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editClient({{ client.id }}, '{{ client.name }}', '{{ client.whatsapp or '' }}', '{{ client.document or '' }}', '{{ client.email or '' }}', '{{ client.address or '' }}', '{{ client.zip_code or '' }}', '{{ client.city or '' }}', '{{ client.state or '' }}')" data-bs-toggle="modal" data-bs-target="#editClientModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form method="POST" action="{{ url_for('clients.delete', client_id=client.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover este cliente?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Client Modal -->
+<div class="modal fade" id="addClientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('clients.add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Novo Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nome *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="whatsapp" class="form-label">WhatsApp</label>
+                                <input type="text" class="form-control" id="whatsapp" name="whatsapp" placeholder="(11) 99999-9999">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="document" class="form-label">CPF/CNPJ</label>
+                                <input type="text" class="form-control" id="document" name="document" placeholder="000.000.000-00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="address" name="address">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="zip_code" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="zip_code" name="zip_code" placeholder="00000-000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="city" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="city" name="city">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="state" class="form-label">UF</label>
+                                <input type="text" class="form-control" id="state" name="state" maxlength="2" placeholder="SP">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Client Modal -->
+<div class="modal fade" id="editClientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" id="editClientForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_name" class="form-label">Nome *</label>
+                                <input type="text" class="form-control" id="edit_name" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_whatsapp" class="form-label">WhatsApp</label>
+                                <input type="text" class="form-control" id="edit_whatsapp" name="whatsapp">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_document" class="form-label">CPF/CNPJ</label>
+                                <input type="text" class="form-control" id="edit_document" name="document">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="edit_email" name="email">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_address" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="edit_address" name="address">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="edit_zip_code" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="edit_zip_code" name="zip_code">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_city" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="edit_city" name="city">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="mb-3">
+                                <label for="edit_state" class="form-label">UF</label>
+                                <input type="text" class="form-control" id="edit_state" name="state" maxlength="2">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Atualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editClient(id, name, whatsapp, document, email, address, zipCode, city, state) {
+    document.getElementById('editClientForm').action = `/clients/edit/${id}`;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_whatsapp').value = whatsapp;
+    document.getElementById('edit_document').value = document;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_address').value = address;
+    document.getElementById('edit_zip_code').value = zipCode;
+    document.getElementById('edit_city').value = city;
+    document.getElementById('edit_state').value = state;
+}
+
+// Auto-format phone and document inputs
+document.addEventListener('DOMContentLoaded', function() {
+    // Phone formatting
+    const phoneInputs = document.querySelectorAll('input[name="whatsapp"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                if (value.length < 14) {
+                    value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                }
+            }
+            e.target.value = value;
+        });
+    });
+    
+    // Document formatting
+    const docInputs = document.querySelectorAll('input[name="document"]');
+    docInputs.forEach(input => {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                // CPF format
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            } else {
+                // CNPJ format
+                value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            }
+            e.target.value = value;
+        });
+    });
+});
+</script>
+{% endblock %}

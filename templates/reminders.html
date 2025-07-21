@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Lembretes - Sistema Financeiro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-bell me-2"></i>Lembretes Automáticos
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reminderModal" onclick="openReminderModal()">
+                <i class="fas fa-plus me-1"></i>Novo Lembrete
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Como Funcionam</h6>
+                            <p class="small mb-0">Os lembretes são enviados automaticamente via WhatsApp nos horários configurados</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-info-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Variáveis</h6>
+                            <p class="small mb-0">Use {cliente}, {valor}, {dias}, {data_vencimento} nas mensagens</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-code fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Tipos</h6>
+                            <p class="small mb-0">Vencimento, Atraso e Follow-up personalizáveis</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminders List -->
+    <div class="card">
+        <div class="card-body">
+            <div class="row" id="remindersList">
+                <!-- Reminders will be loaded here -->
+            </div>
+            
+            <!-- No data message -->
+            <div id="noDataMessage" class="text-center py-5 d-none">
+                <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum lembrete configurado</h5>
+                <p class="text-muted">Clique em "Novo Lembrete" para criar seu primeiro lembrete automático.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reminder Modal -->
+<div class="modal fade" id="reminderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-bell me-2"></i>
+                    <span id="modalTitle">Novo Lembrete</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="reminderForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="reminderName" class="form-label">Nome do Lembrete *</label>
+                                <input type="text" class="form-control" id="reminderName" required placeholder="Ex: Lembrete de Vencimento">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="reminderType" class="form-label">Tipo *</label>
+                                <select class="form-select" id="reminderType" required>
+                                    <option value="due_date">Vencimento</option>
+                                    <option value="overdue">Atraso</option>
+                                    <option value="follow_up">Follow-up</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reminderTime" class="form-label">Horário *</label>
+                                <input type="time" class="form-control" id="reminderTime" required value="09:00">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="reminderDays" class="form-label">Dias *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="reminderDays" required min="0" max="365" value="3">
+                                    <span class="input-group-text" id="daysLabel">dias antes</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reminderMessage" class="form-label">Mensagem *</label>
+                        <textarea class="form-control" id="reminderMessage" rows="4" required placeholder="Olá {cliente}, sua conta no valor de {valor} vence em {dias} dias..."></textarea>
+                        <div class="form-text">
+                            <strong>Variáveis disponíveis:</strong><br>
+                            <code>{cliente}</code> - Nome do cliente<br>
+                            <code>{valor}</code> - Valor da conta<br>
+                            <code>{dias}</code> - Dias até o vencimento/atraso<br>
+                            <code>{data_vencimento}</code> - Data de vencimento
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">
+                            Lembrete ativo
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-info me-2" onclick="testReminder()">
+                        <i class="fas fa-play me-1"></i>Testar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Test Result Modal -->
+<div class="modal fade" id="testResultModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-play me-2"></i>Teste do Lembrete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Mensagem de Exemplo:</h6>
+                <div class="alert alert-info" id="testMessageContent">
+                    <!-- Test message will be shown here -->
+                </div>
+                <h6>Template Original:</h6>
+                <div class="alert alert-secondary" id="originalTemplate">
+                    <!-- Original template will be shown here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentEditingReminder = null;
+
+// Load reminders on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadReminders();
+});
+
+// Update days label based on reminder type
+document.getElementById('reminderType').addEventListener('change', function(e) {
+    const type = e.target.value;
+    const daysLabel = document.getElementById('daysLabel');
+    
+    switch(type) {
+        case 'due_date':
+            daysLabel.textContent = 'dias antes';
+            break;
+        case 'overdue':
+            daysLabel.textContent = 'dias após';
+            break;
+        case 'follow_up':
+            daysLabel.textContent = 'dias depois';
+            break;
+    }
+});
+
+function loadReminders() {
+    showLoading();
+    
+    fetch('/api/reminders')
+        .then(response => response.json())
+        .then(data => {
+            if (data.reminders) {
+                renderReminders(data.reminders);
+            } else {
+                showToast(data.error || 'Erro ao carregar lembretes', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erro de conexão', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+}
+
+function renderReminders(reminders) {
+    const container = document.getElementById('remindersList');
+    const noDataMessage = document.getElementById('noDataMessage');
+    
+    if (reminders.length === 0) {
+        container.innerHTML = '';
+        noDataMessage.classList.remove('d-none');
+        return;
+    }
+    
+    noDataMessage.classList.add('d-none');
+    
+    container.innerHTML = reminders.map(reminder => `
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card ${reminder.is_active ? 'border-success' : 'border-secondary'}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">${reminder.name}</h6>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" ${reminder.is_active ? 'checked' : ''} 
+                               onchange="toggleReminder(${reminder.id})" title="Ativar/Desativar">
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge ${getReminderTypeClass(reminder.reminder_type)}">
+                            ${getReminderTypeText(reminder.reminder_type)}
+                        </span>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>${reminder.time} - 
+                            ${reminder.days} ${getDaysText(reminder.reminder_type)}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block" style="max-height: 60px; overflow: hidden;">
+                            ${reminder.message}
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="testReminderById(${reminder.id})" title="Testar">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="editReminder(${reminder.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteReminder(${reminder.id}, '${reminder.name}')" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted align-self-end">
+                            ${formatDate(reminder.created_at)}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openReminderModal(reminder = null) {
+    currentEditingReminder = reminder;
+    const modal = document.getElementById('reminderModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const form = document.getElementById('reminderForm');
+    
+    form.reset();
+    
+    if (reminder) {
+        modalTitle.textContent = 'Editar Lembrete';
+        document.getElementById('reminderName').value = reminder.name;
+        document.getElementById('reminderType').value = reminder.reminder_type;
+        document.getElementById('reminderTime').value = reminder.time;
+        document.getElementById('reminderDays').value = reminder.days;
+        document.getElementById('reminderMessage').value = reminder.message;
+        document.getElementById('isActive').checked = reminder.is_active;
+        
+        // Update days label
+        document.getElementById('reminderType').dispatchEvent(new Event('change'));
+    } else {
+        modalTitle.textContent = 'Novo Lembrete';
+        document.getElementById('reminderType').dispatchEvent(new Event('change'));
+    }
+}
+
+function editReminder(reminderId) {
+    fetch(`/api/reminders/${reminderId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.reminder) {
+                openReminderModal(data.reminder);
+                new bootstrap.Modal(document.getElementById('reminderModal')).show();
+            } else {
+                showToast(data.error || 'Erro ao carregar lembrete', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erro de conexão', 'error');
+        });
+}
+
+function deleteReminder(reminderId, reminderName) {
+    if (!confirm(`Tem certeza que deseja excluir o lembrete "${reminderName}"?`)) {
+        return;
+    }
+    
+    showLoading();
+    
+    fetch(`/api/reminders/${reminderId}`, {
+        method: 'DELETE'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showToast(data.message, 'success');
+                loadReminders();
+            } else {
+                showToast(data.error || 'Erro ao excluir lembrete', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erro de conexão', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+}
+
+function toggleReminder(reminderId) {
+    showLoading();
+    
+    fetch(`/api/reminders/${reminderId}/toggle`, {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showToast(data.message, 'success');
+                loadReminders();
+            } else {
+                showToast(data.error || 'Erro ao alterar status', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erro de conexão', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+}
+
+function testReminder() {
+    const name = document.getElementById('reminderName').value;
+    const type = document.getElementById('reminderType').value;
+    const time = document.getElementById('reminderTime').value;
+    const days = document.getElementById('reminderDays').value;
+    const message = document.getElementById('reminderMessage').value;
+    
+    if (!name || !type || !time || !days || !message) {
+        showToast('Preencha todos os campos antes de testar', 'warning');
+        return;
+    }
+    
+    // Create a temporary reminder object for testing
+    const testReminderData = { name, reminder_type: type, time, days, message };
+    
+    // Simulate test by showing what the message would look like
+    const testMessage = message
+        .replace('{cliente}', 'Cliente Teste')
+        .replace('{valor}', 'R$ 500,00')
+        .replace('{dias}', days)
+        .replace('{data_vencimento}', '31/12/2024');
+    
+    document.getElementById('testMessageContent').textContent = testMessage;
+    document.getElementById('originalTemplate').textContent = message;
+    
+    new bootstrap.Modal(document.getElementById('testResultModal')).show();
+}
+
+function testReminderById(reminderId) {
+    fetch(`/api/reminders/test/${reminderId}`, {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.test_message) {
+                document.getElementById('testMessageContent').textContent = data.test_message;
+                document.getElementById('originalTemplate').textContent = data.original_template;
+                new bootstrap.Modal(document.getElementById('testResultModal')).show();
+            } else {
+                showToast(data.error || 'Erro ao testar lembrete', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erro de conexão', 'error');
+        });
+}
+
+// Form submission
+document.getElementById('reminderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('reminderName').value,
+        reminder_type: document.getElementById('reminderType').value,
+        time: document.getElementById('reminderTime').value,
+        days: parseInt(document.getElementById('reminderDays').value),
+        message: document.getElementById('reminderMessage').value,
+        is_active: document.getElementById('isActive').checked
+    };
+    
+    showLoading();
+    
+    try {
+        const url = currentEditingReminder ? `/api/reminders/${currentEditingReminder.id}` : '/api/reminders';
+        const method = currentEditingReminder ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('reminderModal')).hide();
+            loadReminders();
+        } else {
+            showToast(data.error || 'Erro ao salvar lembrete', 'error');
+        }
+    } catch (error) {
+        showToast('Erro de conexão', 'error');
+    } finally {
+        hideLoading();
+    }
+});
+
+// Helper functions
+function getReminderTypeText(type) {
+    const typeMap = {
+        'due_date': 'Vencimento',
+        'overdue': 'Atraso',
+        'follow_up': 'Follow-up'
+    };
+    return typeMap[type] || type;
+}
+
+function getReminderTypeClass(type) {
+    const typeMap = {
+        'due_date': 'bg-primary',
+        'overdue': 'bg-danger',
+        'follow_up': 'bg-warning'
+    };
+    return typeMap[type] || 'bg-secondary';
+}
+
+function getDaysText(type) {
+    const textMap = {
+        'due_date': 'dias antes',
+        'overdue': 'dias após',
+        'follow_up': 'dias depois'
+    };
+    return textMap[type] || 'dias';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Administrativo - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-cog me-2"></i>Painel Administrativo</h2>
+            <p class="text-muted">Gerencie usuários, planos e configurações do sistema</p>
+        </div>
+    </div>
+    
+    <!-- Admin Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total de Usuários</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ total_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Planos Ativos</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ active_plans }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-crown fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Admins</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ users|selectattr('is_admin', 'equalto', true)|list|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-shield fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Sistema</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ system_settings.system_name if system_settings else 'FinanceiroMax' }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-server fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-content" type="button" role="tab">
+                <i class="fas fa-users me-1"></i>Usuários
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings-content" type="button" role="tab">
+                <i class="fas fa-cog me-1"></i>Configurações
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users-content" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Gestão de Usuários</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Plano</th>
+                                    <th>Admin</th>
+                                    <th>Cadastro</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                {% if user.is_admin %}
+                                                    <i class="fas fa-user-shield text-white"></i>
+                                                {% else %}
+                                                    <i class="fas fa-user text-white"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <strong>{{ user.username }}</strong>
+                                                {% if user.is_admin %}
+                                                    <br><small class="text-warning">Administrador</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or '-' }}</td>
+                                    <td>
+                                        {% if user.user_plan %}
+                                            <span class="badge 
+                                                {% if user.user_plan.plan_name == 'Basic' %}bg-secondary
+                                                {% elif user.user_plan.plan_name == 'Premium' %}bg-primary
+                                                {% else %}bg-warning{% endif %}">
+                                                {{ user.user_plan.plan_name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Sem plano</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                            <span class="badge bg-warning">Sim</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Não</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="showUserModal({{ user.id }}, '{{ user.username }}', '{{ user.user_plan.plan_name if user.user_plan else 'Basic' }}')" data-bs-toggle="modal" data-bs-target="#userModal">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm {% if user.is_admin %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if user.is_admin %}Remover Admin{% else %}Tornar Admin{% endif %}">
+                                                    <i class="fas {% if user.is_admin %}fa-user-minus{% else %}fa-user-plus{% endif %}"></i>
+                                                </button>
+                                            </form>
+                                            {% if user.id != session.user_id %}
+                                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover este usuário? Todos os dados serão perdidos!')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Settings Tab -->
+        <div class="tab-pane fade" id="settings-content" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Configurações do Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.update_system_settings') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="system_name" class="form-label">Nome do Sistema</label>
+                                    <input type="text" class="form-control" id="system_name" name="system_name" value="{{ system_settings.system_name if system_settings else 'FinanceiroMax' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="logo_url" class="form-label">URL do Logo</label>
+                                    <input type="url" class="form-control" id="logo_url" name="logo_url" value="{{ system_settings.logo_url if system_settings else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="primary_color" class="form-label">Cor Primária</label>
+                                    <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" value="{{ system_settings.primary_color if system_settings else '#007bff' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="secondary_color" class="form-label">Cor Secundária</label>
+                                    <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" value="{{ system_settings.secondary_color if system_settings else '#6c757d' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="favicon_url" class="form-label">URL do Favicon</label>
+                            <input type="url" class="form-control" id="favicon_url" name="favicon_url" value="{{ system_settings.favicon_url if system_settings else '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição do Sistema</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ system_settings.description if system_settings else 'Sistema completo de gestão financeira' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Salvar Configurações
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Evolution API Settings -->
+            <div class="card shadow mt-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-success">Configurações Evolution API</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Evolution API:</strong> Configure as variáveis de ambiente EVOLUTION_API_URL e EVOLUTION_API_KEY para conectar com a API do WhatsApp.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>URL da API:</h6>
+                            <code>{{ url_api or 'Não configurada' }}</code>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Status da API:</h6>
+                            <span class="badge bg-warning">Verificar conectividade</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plan Limits -->
+            <div class="card shadow mt-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-warning">Limites dos Planos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Plano</th>
+                                    <th>Max Clientes</th>
+                                    <th>Max Contas a Receber</th>
+                                    <th>Max Contas a Pagar</th>
+                                    <th>Funcionalidades</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-secondary">Basic</span></td>
+                                    <td>10</td>
+                                    <td>50</td>
+                                    <td>50</td>
+                                    <td>CRUD básico, WhatsApp básico</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-primary">Premium</span></td>
+                                    <td>50</td>
+                                    <td>200</td>
+                                    <td>200</td>
+                                    <td>Vendas parceladas, Lembretes automáticos</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">Enterprise</span></td>
+                                    <td>Ilimitado</td>
+                                    <td>Ilimitado</td>
+                                    <td>Ilimitado</td>
+                                    <td>Todas as funcionalidades, Suporte prioritário</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Management Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="userForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Gerenciar Usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Usuário:</label>
+                        <strong id="modal_username"></strong>
+                    </div>
+                    <div class="mb-3">
+                        <label for="plan_name" class="form-label">Plano</label>
+                        <select class="form-select" id="plan_name" name="plan_name" required>
+                            <option value="Basic">Basic (10 clientes, 50 contas)</option>
+                            <option value="Premium">Premium (50 clientes, 200 contas)</option>
+                            <option value="Enterprise">Enterprise (Ilimitado)</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Atenção:</strong> Alterar o plano afetará os limites do usuário imediatamente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Atualizar Plano
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showUserModal(userId, username, currentPlan) {
+    document.getElementById('userForm').action = `/admin/users/${userId}/update_plan`;
+    document.getElementById('modal_username').textContent = username;
+    document.getElementById('plan_name').value = currentPlan;
+}
+</script>
+{% endblock %}

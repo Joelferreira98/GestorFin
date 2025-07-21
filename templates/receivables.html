@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Contas a Receber - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-arrow-up me-2"></i>Contas a Receber</h2>
+                    <p class="text-muted">Gerencie suas contas a receber e acompanhe os pagamentos</p>
+                </div>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addReceivableModal">
+                    <i class="fas fa-plus me-1"></i>Nova Conta
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total a Receber</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                R$ {{ "%.2f"|format(receivables|selectattr('0.status', 'equalto', 'pending')|map(attribute='0.amount')|sum) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Em Atraso</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                {{ receivables|selectattr('0.status', 'equalto', 'overdue')|list|length }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Pagas este Mês</div>
+                            <div class="h5 mb-0 font-weight-bold">
+                                R$ {{ "%.2f"|format(receivables|selectattr('0.status', 'equalto', 'paid')|map(attribute='0.amount')|sum) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total de Contas</div>
+                            <div class="h5 mb-0 font-weight-bold">{{ receivables|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-list fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Receivables Table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Contas a Receber</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="receivablesTable">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Tipo</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for receivable, client in receivables %}
+                        <tr class="{% if receivable.status == 'overdue' %}table-danger{% elif receivable.status == 'paid' %}table-success{% endif %}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <strong>{{ client.name }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ receivable.description }}</td>
+                            <td>
+                                <strong class="text-success">R$ {{ "%.2f"|format(receivable.amount) }}</strong>
+                                {% if receivable.type == 'installment' %}
+                                    <br><small class="text-muted">{{ receivable.installment_number }}/{{ receivable.total_installments }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ receivable.due_date.strftime('%d/%m/%Y') }}
+                                {% set days_diff = (receivable.due_date - (moment().date() if moment else receivable.due_date))|int %}
+                                {% if receivable.status == 'pending' %}
+                                    {% if days_diff < 0 %}
+                                        <br><small class="text-danger">{{ -days_diff }} dias em atraso</small>
+                                    {% elif days_diff <= 3 %}
+                                        <br><small class="text-warning">Vence em {{ days_diff }} dias</small>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if receivable.status == 'paid' %}
+                                    <span class="badge bg-success">Pago</span>
+                                {% elif receivable.status == 'overdue' %}
+                                    <span class="badge bg-danger">Atrasado</span>
+                                {% elif receivable.status == 'cancelled' %}
+                                    <span class="badge bg-secondary">Cancelado</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if receivable.type == 'installment' %}
+                                    <span class="badge bg-info">Parcelado</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Simples</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    {% if receivable.status == 'pending' %}
+                                    <form method="POST" action="{{ url_for('receivables.mark_paid', receivable_id=receivable.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Marcar como Pago">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editReceivable({{ receivable.id }}, {{ receivable.client_id }}, '{{ receivable.description }}', {{ receivable.amount }}, '{{ receivable.due_date }}', '{{ receivable.status }}')" data-bs-toggle="modal" data-bs-target="#editReceivableModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form method="POST" action="{{ url_for('receivables.delete', receivable_id=receivable.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta conta?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Receivable Modal -->
+<div class="modal fade" id="addReceivableModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('receivables.add') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nova Conta a Receber</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="client_id" class="form-label">Cliente *</label>
+                        <select class="form-select" id="client_id" name="client_id" required>
+                            <option value="">Selecione um cliente</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição *</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Valor *</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Data de Vencimento *</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Receivable Modal -->
+<div class="modal fade" id="editReceivableModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editReceivableForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar Conta a Receber</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_client_id" class="form-label">Cliente *</label>
+                        <select class="form-select" id="edit_client_id" name="client_id" required>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Descrição *</label>
+                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_amount" class="form-label">Valor *</label>
+                        <input type="number" class="form-control" id="edit_amount" name="amount" step="0.01" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_due_date" class="form-label">Data de Vencimento *</label>
+                        <input type="date" class="form-control" id="edit_due_date" name="due_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_status" class="form-label">Status</label>
+                        <select class="form-select" id="edit_status" name="status">
+                            <option value="pending">Pendente</option>
+                            <option value="paid">Pago</option>
+                            <option value="overdue">Atrasado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Atualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editReceivable(id, clientId, description, amount, dueDate, status) {
+    document.getElementById('editReceivableForm').action = `/receivables/edit/${id}`;
+    document.getElementById('edit_client_id').value = clientId;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_amount').value = amount;
+    document.getElementById('edit_due_date').value = dueDate;
+    document.getElementById('edit_status').value = status;
+}
+
+// Set default due date to next month
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    document.getElementById('due_date').value = nextMonth.toISOString().split('T')[0];
+});
+</script>
+{% endblock %}
