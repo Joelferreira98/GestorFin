@@ -5,6 +5,10 @@ from utils import login_required, get_current_user, send_whatsapp_message
 import requests
 import os
 import logging
+import qrcode
+import io
+import base64
+from PIL import Image
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
@@ -131,18 +135,66 @@ def get_qrcode(instance_name):
         return jsonify({'error': 'Evolution API não configurada'}), 400
     
     try:
+        # Clean the API key and URL from any potential issues
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
         response = requests.get(
-            f"{system_settings.evolution_api_url.rstrip('/')}/instance/connect/{instance_name}",
+            f"{clean_api_url}/instance/connect/{instance_name}",
             headers={
-                'apikey': system_settings.evolution_api_key,
+                'apikey': clean_api_key,
             },
             timeout=10
         )
         
+        logging.debug(f"QR Code response: {response.status_code} - {response.text}")
+        
         if response.status_code == 200:
-            return jsonify(response.json())
+            response_data = response.json()
+            
+            # The Evolution API returns QR code in 'code' field as text
+            if 'code' in response_data and response_data['code']:
+                try:
+                    # Generate QR code image from the text code
+                    qr_code_text = response_data['code']
+                    
+                    # Create QR code
+                    qr = qrcode.QRCode(
+                        version=1,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4,
+                    )
+                    qr.add_data(qr_code_text)
+                    qr.make(fit=True)
+                    
+                    # Create image
+                    qr_image = qr.make_image(fill_color="black", back_color="white")
+                    
+                    # Convert to base64
+                    buffer = io.BytesIO()
+                    qr_image.save(buffer, format='PNG')
+                    buffer.seek(0)
+                    
+                    qr_base64 = base64.b64encode(buffer.getvalue()).decode()
+                    
+                    return jsonify({'qrcode': qr_base64})
+                    
+                except Exception as e:
+                    logging.error(f"Error generating QR code: {e}")
+                    return jsonify({'error': f'Erro ao gerar QR code: {str(e)}'})
+            elif 'base64' in response_data:
+                return jsonify({'qrcode': response_data['base64']})
+            else:
+                # Check if instance is already connected
+                if response_data.get('instance', {}).get('connectionStatus') == 'open':
+                    return jsonify({'error': 'WhatsApp já está conectado para esta instância'})
+                else:
+                    # Log the full response for debugging
+                    logging.debug(f"Full QR response: {response_data}")
+                    return jsonify({'error': 'QR Code não disponível. Tente novamente em alguns segundos.'})
         else:
-            return jsonify({'error': 'Erro ao obter QR Code'}), response.status_code
+            return jsonify({'error': f'Erro {response.status_code}: {response.text}'}), response.status_code
     
     except Exception as e:
         logging.error(f"Error getting QR code: {str(e)}")
