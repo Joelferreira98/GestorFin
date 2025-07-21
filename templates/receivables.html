@@ -393,17 +393,27 @@ const clients = [
 ];
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Client search initialized');
+    console.log('Clients available:', clients);
+    
     const clientSearch = document.getElementById('client_search');
     const clientIdInput = document.getElementById('client_id');
     const clientDropdown = document.getElementById('client_dropdown');
     const addNewClientBtn = document.getElementById('add_new_client');
     
+    if (!clientSearch || !clientIdInput || !clientDropdown) {
+        console.error('Client search elements not found');
+        return;
+    }
+    
     // Filter and show clients
     function filterClients(searchTerm) {
+        console.log('Filtering with term:', searchTerm);
         const filtered = clients.filter(client => 
             client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.document.includes(searchTerm)
         );
+        console.log('Filtered results:', filtered);
         
         let html = '';
         
@@ -466,6 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Search input events
     clientSearch.addEventListener('input', function() {
         const searchTerm = this.value;
+        console.log('Search term:', searchTerm);
         filterClients(searchTerm);
         clientDropdown.style.display = 'block';
         
