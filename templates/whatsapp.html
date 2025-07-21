@@ -140,11 +140,11 @@
                                     </td>
                                     <td>{{ instance.created_at.strftime('%d/%m/%Y') }}</td>
                                     <td class="instance-actions">
-                                        {% if instance.status == 'connecting' %}
+                                        {% if instance.status != 'connected' %}
                                         <button class="btn btn-sm btn-info me-1 qr-button" onclick="showQRCode('{{ instance.instance_name }}')">
                                             <i class="fas fa-qrcode"></i> QR Code
                                         </button>
-                                        {% elif instance.status == 'connected' %}
+                                        {% else %}
                                         <form method="POST" action="{{ url_for('whatsapp.logout_instance', instance_name=instance.instance_name) }}" class="d-inline me-1" onsubmit="return confirm('Tem certeza que deseja desconectar o WhatsApp desta instância?')">
                                             <button type="submit" class="btn btn-sm btn-warning disconnect-button">
                                                 <i class="fas fa-sign-out-alt"></i> Desconectar
@@ -608,7 +608,7 @@ function updateInstanceStatus() {
                             const qrButton = actionsCell.querySelector('.qr-button');
                             const disconnectButton = actionsCell.querySelector('.disconnect-button');
                             
-                            if (data.status === 'connecting' && !qrButton) {
+                            if (data.status !== 'connected' && !qrButton) {
                                 // Remove disconnect button if it exists
                                 if (disconnectButton) {
                                     disconnectButton.closest('form').remove();
@@ -638,14 +638,6 @@ function updateInstanceStatus() {
                                 
                                 disconnectForm.appendChild(disconnectBtn);
                                 actionsCell.insertBefore(disconnectForm, actionsCell.firstChild);
-                            } else if (data.status === 'disconnected') {
-                                // Remove both buttons
-                                if (qrButton) {
-                                    qrButton.remove();
-                                }
-                                if (disconnectButton) {
-                                    disconnectButton.closest('form').remove();
-                                }
                             }
                         }
                     }
