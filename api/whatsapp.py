@@ -27,13 +27,12 @@ def add_instance():
     user = get_current_user()
     
     instance_name = request.form.get('instance_name')
-    phone_number = request.form.get('phone_number')
     
     # Get Evolution API settings from admin panel
     system_settings = SystemSettings.query.first()
     
     if not system_settings or not system_settings.evolution_enabled:
-        flash('Integração Evolution API não está configurada ou ativada!', 'error')
+        flash('Integração Evolution API não está configurada ou ativada! Configure no painel administrativo primeiro.', 'error')
         return redirect(url_for('whatsapp.index'))
     
     if not system_settings.evolution_api_url or not system_settings.evolution_api_key:
@@ -41,26 +40,7 @@ def add_instance():
         return redirect(url_for('whatsapp.index'))
     
     try:
-        # First, check if the instance already exists
-        check_response = requests.get(
-            f"{system_settings.evolution_api_url.rstrip('/')}/instance/fetchInstances",
-            headers={
-                'apikey': system_settings.evolution_api_key,
-                'Content-Type': 'application/json'
-            },
-            timeout=10
-        )
-        
-        logging.debug(f"Check instances response: {check_response.status_code} - {check_response.text}")
-        
-        if check_response.status_code == 401:
-            flash('Chave da API inválida! Verifique as configurações no painel administrativo.', 'error')
-            return redirect(url_for('whatsapp.index'))
-        elif check_response.status_code != 200:
-            flash(f'Erro ao conectar com a Evolution API: {check_response.status_code}', 'error')
-            return redirect(url_for('whatsapp.index'))
-        
-        # Create the instance
+        # Create the instance directly using Baileys
         create_response = requests.post(
             f"{system_settings.evolution_api_url.rstrip('/')}/instance/create",
             headers={
@@ -69,43 +49,53 @@ def add_instance():
             },
             json={
                 'instanceName': instance_name,
-                'token': system_settings.evolution_api_key,
                 'qrcode': True,
-                'integration': 'WHATSAPP-BAILEYS'
+                'integration': 'WHATSAPP-BAILEYS',
+                'webhook_by_events': False,
+                'reject_call': False,
+                'msg_retry_count': 3,
+                'connect_type': 'qrcode'
             },
             timeout=30
         )
         
         logging.debug(f"Create instance response: {create_response.status_code} - {create_response.text}")
         
-        if create_response.status_code in [200, 201]:
+        if create_response.status_code == 401:
+            flash('Chave da API inválida! Verifique a configuração no painel administrativo. Certifique-se de que a chave está correta e que a API está funcionando.', 'error')
+            return redirect(url_for('whatsapp.index'))
+        elif create_response.status_code in [200, 201]:
             result = create_response.json()
             
             instance = UserWhatsAppInstance(
                 user_id=user.id,
                 instance_name=instance_name,
-                phone_number=phone_number,
+                phone_number=None,  # Número será preenchido após conectar
                 status='connecting'
             )
             
             db.session.add(instance)
             db.session.commit()
             
-            flash('Instância criada com sucesso! Use o QR Code para conectar seu WhatsApp.', 'success')
+            flash('Instância criada com sucesso! Clique em "QR Code" para conectar seu WhatsApp.', 'success')
+        elif create_response.status_code == 409:
+            flash(f'Instância "{instance_name}" já existe! Escolha outro nome.', 'warning')
         else:
-            error_msg = create_response.text
+            error_msg = 'Erro desconhecido'
             try:
                 error_data = create_response.json()
                 if 'message' in error_data:
                     error_msg = error_data['message']
+                elif 'error' in error_data:
+                    error_msg = error_data['error']
             except:
-                pass
+                error_msg = f'Código de erro: {create_response.status_code}'
             flash(f'Erro ao criar instância: {error_msg}', 'error')
     
     except requests.exceptions.Timeout:
-        flash('Tempo limite esgotado. Verifique se a URL da API está correta.', 'error')
+        flash('Tempo limite esgotado. Verifique se a URL da API está correta e acessível.', 'error')
     except requests.exceptions.ConnectionError:
-        flash('Erro de conexão. Verifique se a URL da API está correta e acessível.', 'error')
+        flash('Erro de conexão. Verifique se a URL da API está correta e se o servidor está funcionando.', 'error')
     except Exception as e:
         logging.error(f"Error creating instance: {str(e)}")
         flash(f'Erro inesperado: {str(e)}', 'error')

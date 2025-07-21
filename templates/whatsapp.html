@@ -161,6 +161,11 @@
                         <i class="fab fa-whatsapp fa-3x text-muted mb-3"></i>
                         <h5>Nenhuma instância configurada</h5>
                         <p class="text-muted">Crie uma instância para começar a enviar mensagens</p>
+                        <div class="alert alert-info mt-3">
+                            <strong>Lembre-se:</strong> Configure primeiro a Evolution API no 
+                            <a href="{{ url_for('admin.index') }}" class="alert-link">painel administrativo</a> 
+                            antes de criar instâncias.
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -363,15 +368,20 @@
                     <div class="mb-3">
                         <label for="instance_name" class="form-label">Nome da Instância *</label>
                         <input type="text" class="form-control" id="instance_name" name="instance_name" required placeholder="Ex: principal, vendas, suporte">
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone_number" class="form-label">Número do WhatsApp *</label>
-                        <input type="text" class="form-control" id="phone_number" name="phone_number" required placeholder="5511999999999">
-                        <small class="text-muted">Formato: código do país + DDD + número (sem espaços ou símbolos)</small>
+                        <small class="text-muted">Use nomes únicos e descritivos para identificar suas instâncias</small>
                     </div>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-1"></i>
-                        <strong>Importante:</strong> Após criar a instância, você receberá um QR Code para conectar seu WhatsApp.
+                        <strong>Como funciona:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Criamos a instância usando tecnologia Baileys</li>
+                            <li>Você receberá um QR Code para conectar</li>
+                            <li>O número será detectado automaticamente após conexão</li>
+                        </ol>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        <strong>Pré-requisito:</strong> Certifique-se de que a Evolution API está configurada e ativada no painel administrativo.
                     </div>
                 </div>
                 <div class="modal-footer">
