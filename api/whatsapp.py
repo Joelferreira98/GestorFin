@@ -40,16 +40,29 @@ def add_instance():
         return redirect(url_for('whatsapp.index'))
     
     try:
+        # Debug: Log the exact configuration being used
+        logging.debug(f"API URL: '{system_settings.evolution_api_url}'")
+        logging.debug(f"API Key: '{system_settings.evolution_api_key}'")
+        logging.debug(f"API Key length: {len(system_settings.evolution_api_key) if system_settings.evolution_api_key else 'None'}")
+        logging.debug(f"Instance Name: '{instance_name}'")
+        
+        # Clean the API key and URL from any potential whitespace/encoding issues
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
+        logging.debug(f"Clean API Key: '{clean_api_key}'")
+        logging.debug(f"Clean API URL: '{clean_api_url}'")
+        
         # Create the instance directly using Baileys (following Evolution API documentation)
         create_response = requests.post(
-            f"{system_settings.evolution_api_url.rstrip('/')}/instance/create",
+            f"{clean_api_url}/instance/create",
             headers={
                 'Content-Type': 'application/json',
-                'apikey': system_settings.evolution_api_key
+                'apikey': clean_api_key
             },
             json={
                 'instanceName': instance_name,
-                'token': system_settings.evolution_api_key,
+                'token': clean_api_key,
                 'qrcode': True,
                 'integration': 'WHATSAPP-BAILEYS'
             },

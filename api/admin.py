@@ -94,10 +94,20 @@ def update_evolution_api():
         settings = SystemSettings()
         db.session.add(settings)
     
-    settings.evolution_api_url = request.form.get('evolution_api_url')
-    settings.evolution_api_key = request.form.get('evolution_api_key')
-    settings.evolution_default_instance = request.form.get('evolution_default_instance')
-    settings.evolution_webhook_url = request.form.get('evolution_webhook_url')
+    # Clean and validate form inputs to prevent None concatenation
+    api_url = request.form.get('evolution_api_url', '').strip()
+    api_key = request.form.get('evolution_api_key', '').strip()
+    default_instance = request.form.get('evolution_default_instance', '').strip()
+    webhook_url = request.form.get('evolution_webhook_url', '').strip()
+    
+    # Remove any 'None' prefix that might have been accidentally added
+    if api_key.startswith('None'):
+        api_key = api_key[4:]  # Remove 'None' prefix
+    
+    settings.evolution_api_url = api_url if api_url else None
+    settings.evolution_api_key = api_key if api_key else None
+    settings.evolution_default_instance = default_instance if default_instance else None
+    settings.evolution_webhook_url = webhook_url if webhook_url else None
     settings.evolution_enabled = 'evolution_enabled' in request.form
     
     db.session.commit()
@@ -118,11 +128,21 @@ def test_evolution_api():
         return redirect(url_for('admin.index'))
     
     try:
+        # Debug: Log the exact configuration being used
+        import logging
+        logging.debug(f"Admin Test - API URL: '{settings.evolution_api_url}'")
+        logging.debug(f"Admin Test - API Key: '{settings.evolution_api_key}'")
+        logging.debug(f"Admin Test - API Key length: {len(settings.evolution_api_key) if settings.evolution_api_key else 'None'}")
+        
+        # Clean the API key and URL from any potential issues
+        clean_api_key = settings.evolution_api_key.strip() if settings.evolution_api_key else ''
+        clean_api_url = settings.evolution_api_url.rstrip('/') if settings.evolution_api_url else ''
+        
         # Test connection to Evolution API using the correct structure
         response = requests.get(
-            f"{settings.evolution_api_url.rstrip('/')}/instance/fetchInstances",
+            f"{clean_api_url}/instance/fetchInstances",
             headers={
-                'apikey': settings.evolution_api_key
+                'apikey': clean_api_key
             },
             timeout=10
         )
