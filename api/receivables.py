@@ -98,7 +98,13 @@ def send_reminder(receivable_id):
     
     client = Client.query.get(receivable.client_id)
     if not client or not client.whatsapp:
-        flash('Cliente não possui telefone cadastrado!', 'error')
+        flash('Cliente não possui WhatsApp cadastrado!', 'error')
+        return redirect(url_for('receivables.index'))
+    
+    # Validar formato do WhatsApp
+    whatsapp = client.whatsapp.strip()
+    if not whatsapp or len(whatsapp) < 10:
+        flash('Número de WhatsApp inválido!', 'error')
         return redirect(url_for('receivables.index'))
     
     # Formatar mensagem de cobrança
@@ -140,7 +146,7 @@ Obrigado!"""
     if success:
         flash(f'Cobrança enviada via WhatsApp para {client.name}!', 'success')
     else:
-        flash('Erro ao enviar mensagem. Verifique a configuração do WhatsApp.', 'error')
+        flash('Erro ao enviar cobrança: Verifique se o WhatsApp está conectado e o número é válido.', 'error')
     
     return redirect(url_for('receivables.index'))
 

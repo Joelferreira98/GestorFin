@@ -146,7 +146,12 @@ def send_whatsapp_message(user_id, phone, message):
             timeout=10
         )
         
-        logging.debug(f"WhatsApp message response: {response.status_code} - {response.text}")
+        logging.info(f"WhatsApp message response: {response.status_code} - {response.text}")
+        
+        if response.status_code == 400:
+            # Número não existe no WhatsApp
+            logging.warning(f"WhatsApp number not found: {formatted_phone}")
+            return False
         
         return response.status_code in [200, 201]
     except Exception as e:
