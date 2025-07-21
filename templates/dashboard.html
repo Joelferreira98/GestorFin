@@ -87,6 +87,11 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Contas em Atraso</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_receivables }} a receber | {{ overdue_payables }} a pagar</div>
+                            <form method="POST" action="/tasks/update_overdue" class="d-inline mt-1">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Atualizar status de contas em atraso">
+                                    <i class="fas fa-sync-alt me-1"></i>Atualizar
+                                </button>
+                            </form>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>

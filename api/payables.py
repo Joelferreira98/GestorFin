@@ -4,6 +4,7 @@ from models import Payable, Supplier, UserPlan
 from utils import login_required, get_current_user
 from datetime import datetime, date
 from sqlalchemy import extract
+from tasks import update_overdue_status
 
 payables_bp = Blueprint('payables', __name__)
 
@@ -11,6 +12,9 @@ payables_bp = Blueprint('payables', __name__)
 @login_required
 def index():
     user = get_current_user()
+    
+    # Atualizar status de contas em atraso automaticamente
+    update_overdue_status()
     
     # Get month and year filter from request
     filter_month = request.args.get('month', str(date.today().month), type=int)

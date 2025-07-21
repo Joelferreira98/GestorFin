@@ -4,6 +4,7 @@ from models import User, Client, Receivable, Payable, InstallmentSale
 from utils import login_required, get_current_user
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from tasks import update_overdue_status
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -13,6 +14,9 @@ def index():
         return redirect(url_for('auth.login'))
     
     user = get_current_user()
+    
+    # Atualizar status de contas em atraso automaticamente
+    update_overdue_status()
     
     # Dashboard statistics
     total_clients = Client.query.filter_by(user_id=user.id).count()

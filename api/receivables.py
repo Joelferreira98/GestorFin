@@ -4,6 +4,7 @@ from models import Receivable, Client, UserPlan, InstallmentSale
 from utils import login_required, get_current_user, send_whatsapp_message
 from datetime import datetime, date
 from sqlalchemy import and_, extract, or_
+from tasks import update_overdue_status
 
 receivables_bp = Blueprint('receivables', __name__)
 
@@ -11,6 +12,9 @@ receivables_bp = Blueprint('receivables', __name__)
 @login_required
 def index():
     user = get_current_user()
+    
+    # Atualizar status de contas em atraso automaticamente
+    update_overdue_status()
     
     # Get month and year filter from request
     filter_month = request.args.get('month', str(date.today().month), type=int)
@@ -44,15 +48,6 @@ def index():
     ).order_by(Receivable.due_date.asc())
     
     receivables = receivables_query.all()
-    
-    # Update overdue status for pending receivables
-    today = date.today()
-    for receivable, client in receivables:
-        if receivable.status == 'pending' and receivable.due_date < today:
-            receivable.status = 'overdue'
-    
-    db.session.commit()
-    
     clients = Client.query.filter_by(user_id=user.id).all()
     
     # Generate month options for the filter
