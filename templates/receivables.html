@@ -386,13 +386,14 @@ function editReceivable(id, clientId, description, amount, dueDate, status) {
 }
 
 // Client search functionality
-const clients = [
-    {% for client in clients %}
-    {id: {{ client.id }}, name: "{{ client.name }}", document: "{{ client.document }}"},
-    {% endfor %}
-];
-
 document.addEventListener('DOMContentLoaded', function() {
+    // Data from server
+    const clients = [
+        {% for client in clients %}
+        {id: {{ client.id }}, name: {{ client.name|tojson }}, document: {{ client.document|tojson }}},
+        {% endfor %}
+    ];
+    
     console.log('Client search initialized');
     console.log('Clients available:', clients);
     
@@ -510,6 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize dropdown
     filterClients('');
+    
+    console.log('Client search setup complete');
 });
 </script>
 {% endblock %}
