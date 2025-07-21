@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
 from models import Receivable, Client, UserPlan, InstallmentSale
-from utils import login_required, get_current_user
+from utils import login_required, get_current_user, send_whatsapp_message
 from datetime import datetime, date
 from sqlalchemy import and_, extract, or_
 
@@ -74,6 +74,67 @@ def index():
                          current_month=filter_month,
                          current_year=filter_year)
 
+
+
+@receivables_bp.route('/send_reminder/<int:receivable_id>', methods=['POST'])
+@login_required
+def send_reminder(receivable_id):
+    """Enviar lembrete de cobrança via WhatsApp"""
+    user = get_current_user()
+    receivable = Receivable.query.filter_by(id=receivable_id, user_id=user.id).first()
+    
+    if not receivable:
+        flash('Conta não encontrada!', 'error')
+        return redirect(url_for('receivables.index'))
+    
+    client = Client.query.get(receivable.client_id)
+    if not client or not client.whatsapp:
+        flash('Cliente não possui telefone cadastrado!', 'error')
+        return redirect(url_for('receivables.index'))
+    
+    # Formatar mensagem de cobrança
+    days_overdue = (datetime.now().date() - receivable.due_date).days
+    
+    if days_overdue > 0:
+        message = f"""🔴 *CONTA EM ATRASO* 🔴
+
+Olá {client.name}!
+
+Temos uma conta em aberto em seu nome:
+
+📋 *Descrição:* {receivable.description}
+💰 *Valor:* R$ {receivable.amount:.2f}
+📅 *Vencimento:* {receivable.due_date.strftime('%d/%m/%Y')}
+⚠️ *Atraso:* {days_overdue} dias
+
+Por favor, entre em contato para regularização.
+
+Obrigado!"""
+    else:
+        days_to_due = (receivable.due_date - datetime.now().date()).days
+        message = f"""💰 *LEMBRETE DE COBRANÇA* 💰
+
+Olá {client.name}!
+
+Lembramos que você possui uma conta a vencer:
+
+📋 *Descrição:* {receivable.description}
+💰 *Valor:* R$ {receivable.amount:.2f}
+📅 *Vencimento:* {receivable.due_date.strftime('%d/%m/%Y')}
+⏰ *Vence em:* {days_to_due} dias
+
+Obrigado!"""
+    
+    # Enviar mensagem via WhatsApp
+    success = send_whatsapp_message(client.whatsapp, message)
+    
+    if success:
+        flash(f'Cobrança enviada via WhatsApp para {client.name}!', 'success')
+    else:
+        flash('Erro ao enviar mensagem. Verifique a configuração do WhatsApp.', 'error')
+    
+    return redirect(url_for('receivables.index'))
+
 @receivables_bp.route('/add', methods=['POST'])
 @login_required
 def add():
@@ -137,11 +198,20 @@ def delete(receivable_id):
 @receivables_bp.route('/mark_paid/<int:receivable_id>', methods=['POST'])
 @login_required
 def mark_paid(receivable_id):
+    """Marcar conta como paga"""
     user = get_current_user()
-    receivable = Receivable.query.filter_by(id=receivable_id, user_id=user.id).first_or_404()
+    receivable = Receivable.query.filter_by(id=receivable_id, user_id=user.id).first()
+    
+    if not receivable:
+        flash('Conta não encontrada!', 'error')
+        return redirect(url_for('receivables.index'))
+    
+    if receivable.status == 'paid':
+        flash('Esta conta já está marcada como paga!', 'warning')
+        return redirect(url_for('receivables.index'))
     
     receivable.status = 'paid'
     db.session.commit()
     
-    flash('Conta marcada como paga!', 'success')
+    flash(f'Conta "{receivable.description}" marcada como paga!', 'success')
     return redirect(url_for('receivables.index'))

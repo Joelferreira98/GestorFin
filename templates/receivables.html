@@ -182,16 +182,21 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     {% if receivable.status == 'pending' %}
-                                    <form method="POST" action="{{ url_for('receivables.mark_paid', receivable_id=receivable.id) }}" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Marcar como Pago">
+                                    <form method="POST" action="/receivables/mark_paid/{{ receivable.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Marcar como Pago" onclick="return confirm('Confirma o pagamento desta conta?')">
                                             <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="/receivables/send_reminder/{{ receivable.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-warning" title="Enviar Cobrança via WhatsApp">
+                                            <i class="fab fa-whatsapp"></i>
                                         </button>
                                     </form>
                                     {% endif %}
                                     <button class="btn btn-sm btn-outline-primary" onclick="editReceivable({{ receivable.id }}, {{ receivable.client_id }}, '{{ receivable.description }}', {{ receivable.amount }}, '{{ receivable.due_date }}', '{{ receivable.status }}')" data-bs-toggle="modal" data-bs-target="#editReceivableModal">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ url_for('receivables.delete', receivable_id=receivable.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta conta?')">
+                                    <form method="POST" action="/receivables/delete/{{ receivable.id }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta conta?')">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">
                                             <i class="fas fa-trash"></i>
                                         </button>
