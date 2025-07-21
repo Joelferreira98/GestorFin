@@ -159,7 +159,23 @@ def add():
         flash(f'Limite de {user_plan.max_receivables} contas a receber atingido para o plano {user_plan.plan_name}!', 'error')
         return redirect(url_for('receivables.index'))
     
+    # Get client_id from hidden field or find by name
     client_id = request.form.get('client_id')
+    client_name = request.form.get('client_name', '').strip()
+    
+    # If no client_id provided, try to find by name
+    if not client_id and client_name:
+        client = Client.query.filter_by(user_id=user.id, name=client_name).first()
+        if client:
+            client_id = client.id
+        else:
+            flash(f'Cliente "{client_name}" não encontrado. Por favor, selecione um cliente válido.', 'error')
+            return redirect(url_for('receivables.index'))
+    
+    if not client_id:
+        flash('Por favor, selecione um cliente válido.', 'error')
+        return redirect(url_for('receivables.index'))
+    
     description = request.form.get('description')
     amount = request.form.get('amount')
     due_date = request.form.get('due_date')
