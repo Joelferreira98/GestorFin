@@ -58,6 +58,7 @@ from api.accounts import accounts_bp
 from api.whatsapp import whatsapp_bp
 from api.admin import admin_bp
 from api.tasks import tasks_bp
+from api.reminders import reminders_bp
 from api.dashboard import dashboard_bp
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -69,6 +70,7 @@ app.register_blueprint(accounts_bp, url_prefix='/accounts')
 app.register_blueprint(whatsapp_bp, url_prefix='/whatsapp')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(tasks_bp, url_prefix='/tasks')
+app.register_blueprint(reminders_bp, url_prefix='/reminders')
 app.register_blueprint(dashboard_bp, url_prefix='/')
 
 if __name__ == '__main__':

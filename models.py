@@ -165,6 +165,32 @@ class UserPlan(db.Model):
     expires_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class AutoReminderConfig(db.Model):
+    __tablename__ = 'auto_reminder_configs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    
+    # Configurações de lembretes de vencimento
+    enable_due_reminders = db.Column(db.Boolean, default=True)
+    days_before_due = db.Column(db.String(50), default='1,3,7')  # dias separados por vírgula
+    
+    # Configurações de lembretes de atraso
+    enable_overdue_reminders = db.Column(db.Boolean, default=True)
+    days_after_due = db.Column(db.String(50), default='1,3,7,15,30')  # dias separados por vírgula
+    
+    # Horário preferido para envio (formato HH:MM)
+    preferred_time = db.Column(db.String(5), default='09:00')
+    
+    # Status ativo/inativo
+    is_active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamento
+    user = db.relationship('User', backref='reminder_config')
+
 class UserWhatsAppInstance(db.Model):
     __tablename__ = 'user_whatsapp_instances'
     
