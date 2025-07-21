@@ -160,8 +160,8 @@
                             <tbody>
                                 {% for receivable, client in recent_receivables %}
                                 <tr>
-                                    <td>{{ client.name }}</td>
-                                    <td>{{ receivable.description[:30] }}...</td>
+                                    <td>{{ client.name if client else 'Sem cliente' }}</td>
+                                    <td>{{ receivable.description[:30] }}{% if receivable.description|length > 30 %}...{% endif %}</td>
                                     <td>R$ {{ "%.2f"|format(receivable.amount) }}</td>
                                     <td>{{ receivable.due_date.strftime('%d/%m/%Y') }}</td>
                                     <td>
@@ -202,8 +202,8 @@
                             <tbody>
                                 {% for payable in recent_payables %}
                                 <tr>
-                                    <td>{{ payable.supplier.name if payable.supplier else 'Sem fornecedor' }}</td>
-                                    <td>{{ payable.description[:30] }}...</td>
+                                    <td>Sem fornecedor</td>
+                                    <td>{{ payable.description[:30] }}{% if payable.description|length > 30 %}...{% endif %}</td>
                                     <td>R$ {{ "%.2f"|format(payable.amount) }}</td>
                                     <td>{{ payable.due_date.strftime('%d/%m/%Y') }}</td>
                                     <td>

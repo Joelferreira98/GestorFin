@@ -23,8 +23,8 @@ def index():
     receivables_grouped = {}
     
     for receivable in all_receivables:
-        # Remove "- Parcela X" da descrição para agrupar
-        base_description = re.sub(r' - Parcela \d+', '', receivable.description)
+        # Remove "- Parcela X" e "- Mês X" da descrição para agrupar
+        base_description = re.sub(r' - (Parcela|Mês) \d+.*', '', receivable.description)
         key = (base_description, receivable.client_id)
         
         if key not in receivables_grouped:
@@ -48,8 +48,8 @@ def index():
     payables_grouped = {}
     
     for payable in all_payables:
-        # Remove "- Parcela X" da descrição para agrupar
-        base_description = re.sub(r' - Parcela \d+', '', payable.description)
+        # Remove "- Parcela X" e "- Mês X" da descrição para agrupar
+        base_description = re.sub(r' - (Parcela|Mês) \d+.*', '', payable.description)
         key = (base_description, payable.supplier_id)
         
         if key not in payables_grouped:

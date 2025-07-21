@@ -42,14 +42,73 @@ def index():
         Payable.due_date < today
     ).count()
     
-    # Recent activities
-    recent_receivables = db.session.query(Receivable, Client).join(Client).filter(
-        Receivable.user_id == user.id
-    ).order_by(Receivable.created_at.desc()).limit(5).all()
+    # Recent activities - agrupadas por conta (não parcelas individuais)
+    import re
     
-    recent_payables = Payable.query.filter_by(user_id=user.id).order_by(
-        Payable.created_at.desc()
-    ).limit(5).all()
+    # Buscar receivables e agrupar
+    all_receivables = Receivable.query.filter_by(user_id=user.id).order_by(Receivable.created_at.desc()).all()
+    receivables_grouped = {}
+    
+    for receivable in all_receivables:
+        base_description = re.sub(r' - (Parcela|Mês) \d+.*', '', receivable.description)
+        key = (base_description, receivable.client_id)
+        
+        if key not in receivables_grouped:
+            receivables_grouped[key] = {
+                'description': base_description,
+                'client_id': receivable.client_id,
+                'total_amount': 0,
+                'first_due_date': receivable.due_date,
+                'created_at': receivable.created_at,
+                'status': receivable.status
+            }
+        
+        receivables_grouped[key]['total_amount'] += receivable.amount
+        if receivable.due_date < receivables_grouped[key]['first_due_date']:
+            receivables_grouped[key]['first_due_date'] = receivable.due_date
+    
+    recent_receivables_data = sorted(receivables_grouped.values(), key=lambda x: x['created_at'], reverse=True)[:5]
+    recent_receivables = []
+    for r in recent_receivables_data:
+        client = Client.query.get(r['client_id'])
+        recent_receivables.append((type('obj', (object,), {
+            'description': r['description'],
+            'amount': r['total_amount'],
+            'due_date': r['first_due_date'],
+            'status': r['status']
+        })(), client))
+    
+    # Buscar payables e agrupar
+    all_payables = Payable.query.filter_by(user_id=user.id).order_by(Payable.created_at.desc()).all()
+    payables_grouped = {}
+    
+    for payable in all_payables:
+        base_description = re.sub(r' - (Parcela|Mês) \d+.*', '', payable.description)
+        key = (base_description, payable.supplier_id)
+        
+        if key not in payables_grouped:
+            payables_grouped[key] = {
+                'description': base_description,
+                'supplier_id': payable.supplier_id,
+                'total_amount': 0,
+                'first_due_date': payable.due_date,
+                'created_at': payable.created_at,
+                'status': payable.status
+            }
+        
+        payables_grouped[key]['total_amount'] += payable.amount
+        if payable.due_date < payables_grouped[key]['first_due_date']:
+            payables_grouped[key]['first_due_date'] = payable.due_date
+    
+    recent_payables_data = sorted(payables_grouped.values(), key=lambda x: x['created_at'], reverse=True)[:5]
+    recent_payables = []
+    for p in recent_payables_data:
+        recent_payables.append(type('obj', (object,), {
+            'description': p['description'],
+            'amount': p['total_amount'],
+            'due_date': p['first_due_date'],
+            'status': p['status']
+        })())
     
     # Installment sales summary
     pending_sales = InstallmentSale.query.filter_by(user_id=user.id, status='pending').count()
