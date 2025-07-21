@@ -84,9 +84,20 @@ def confirm_sale(token):
     # Handle file upload (document photo)
     document_photo = request.files.get('document_photo')
     if document_photo and document_photo.filename:
-        # In production, save to a proper storage service
-        filename = f"doc_{sale.id}_{uuid.uuid4().hex}.jpg"
-        # For now, just store the filename
+        import os
+        from werkzeug.utils import secure_filename
+        
+        # Create uploads directory if it doesn't exist
+        upload_dir = 'static/uploads/documents'
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate secure filename
+        file_extension = document_photo.filename.rsplit('.', 1)[1].lower() if '.' in document_photo.filename else 'jpg'
+        filename = f"doc_{sale.id}_{uuid.uuid4().hex}.{file_extension}"
+        filepath = os.path.join(upload_dir, filename)
+        
+        # Save the file
+        document_photo.save(filepath)
         sale.document_photo = filename
     
     sale.status = 'confirmed'
@@ -157,15 +168,30 @@ def reject(sale_id):
     user = get_current_user()
     sale = InstallmentSale.query.filter_by(id=sale_id, user_id=user.id).first_or_404()
     
-    sale.status = 'rejected'
-    sale.approval_notes = request.form.get('rejection_notes')
+    rejection_notes = request.form.get('rejection_notes')
+    send_new_link = request.form.get('send_new_link') == 'true'
+    
+    # If sending new link, reset sale status and generate new token
+    if send_new_link:
+        sale.status = 'pending'
+        sale.confirmation_token = str(uuid.uuid4())
+        sale.confirmed_at = None
+        sale.document_photo = None
+        sale.approval_notes = f"REJEITADO - {rejection_notes}"
+    else:
+        sale.status = 'rejected'
+        sale.approval_notes = rejection_notes
     
     db.session.commit()
     
-    # Send WhatsApp rejection notification
+    # Send WhatsApp notification
     client = Client.query.get(sale.client_id)
     if client and client.whatsapp:
-        message = f"Olá {client.name}! Infelizmente sua venda parcelada foi REJEITADA. Motivo: {sale.approval_notes}"
+        if send_new_link:
+            confirmation_url = url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)
+            message = f"Olá {client.name}! Sua venda parcelada foi REJEITADA. Motivo: {rejection_notes}\n\nVocê pode enviar um novo documento através deste link: {confirmation_url}"
+        else:
+            message = f"Olá {client.name}! Infelizmente sua venda parcelada foi REJEITADA. Motivo: {rejection_notes}"
         
         # Actually send the message via WhatsApp
         success = send_whatsapp_message(user.id, client.whatsapp, message)
@@ -173,14 +199,18 @@ def reject(sale_id):
         whatsapp_msg = WhatsAppMessage(
             user_id=user.id,
             client_id=sale.client_id,
-            message_type='rejection',
+            message_type='rejection_with_resubmit' if send_new_link else 'rejection',
             content=message,
             status='sent' if success else 'failed'
         )
         db.session.add(whatsapp_msg)
         db.session.commit()
     
-    flash('Venda rejeitada com sucesso!', 'success')
+    if send_new_link:
+        flash('Venda rejeitada e novo link enviado ao cliente!', 'success')
+    else:
+        flash('Venda rejeitada com sucesso!', 'success')
+    
     return redirect(url_for('installment_sales.index'))
 
 @installment_sales_bp.route('/regenerate_token/<int:sale_id>', methods=['POST'])

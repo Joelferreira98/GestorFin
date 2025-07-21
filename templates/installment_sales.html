@@ -154,6 +154,11 @@
                                             </button>
                                         </form>
                                     {% elif sale.status == 'confirmed' %}
+                                        {% if sale.document_photo %}
+                                        <button class="btn btn-sm btn-info" onclick="viewDocument('{{ sale.document_photo }}', '{{ client.name }}')" data-bs-toggle="modal" data-bs-target="#documentModal" title="Ver Documento">
+                                            <i class="fas fa-image"></i>
+                                        </button>
+                                        {% endif %}
                                         <button class="btn btn-sm btn-success" onclick="showApprovalModal({{ sale.id }}, '{{ client.name }}', '{{ sale.description }}', {{ sale.total_amount }})" data-bs-toggle="modal" data-bs-target="#approvalModal" title="Aprovar">
                                             <i class="fas fa-thumbs-up"></i>
                                         </button>
@@ -287,6 +292,30 @@
     </div>
 </div>
 
+<!-- Document View Modal -->
+<div class="modal fade" id="documentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-image me-2"></i>Documento Enviado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <strong>Cliente:</strong> <span id="document_client_name"></span>
+                </div>
+                <img id="document_image" src="" class="img-fluid rounded shadow" style="max-height: 500px;" alt="Documento do cliente">
+                <div class="mt-3">
+                    <small class="text-muted">Analise o documento enviado pelo cliente para aprovar ou rejeitar a venda</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Rejection Modal -->
 <div class="modal fade" id="rejectionModal" tabindex="-1">
     <div class="modal-dialog">
@@ -305,9 +334,16 @@
                         <label for="rejection_notes" class="form-label">Motivo da Rejeição *</label>
                         <textarea class="form-control" id="rejection_notes" name="rejection_notes" rows="3" required placeholder="Explique o motivo da rejeição..."></textarea>
                     </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="send_new_link" name="send_new_link" value="true" checked>
+                        <label class="form-check-label" for="send_new_link">
+                            <strong>Enviar novo link de confirmação</strong><br>
+                            <small class="text-muted">Se marcado, um novo token será gerado e enviado ao cliente</small>
+                        </label>
+                    </div>
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>Ao rejeitar:</strong> O cliente será notificado via WhatsApp com o motivo da rejeição.
+                        <strong>Ao rejeitar:</strong> O cliente será notificado via WhatsApp com o motivo da rejeição e poderá receber um novo link.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -343,6 +379,11 @@ function showRejectionModal(saleId, clientName, description) {
     document.getElementById('rejectionForm').action = `/sales/reject/${saleId}`;
     document.getElementById('rejection_client_name').textContent = clientName;
     document.getElementById('rejection_description').textContent = description;
+}
+
+function viewDocument(filename, clientName) {
+    document.getElementById('document_client_name').textContent = clientName;
+    document.getElementById('document_image').src = `/static/uploads/documents/${filename}`;
 }
 
 // Calculate installment preview
