@@ -119,7 +119,7 @@
                             </thead>
                             <tbody>
                                 {% for instance in instances %}
-                                <tr>
+                                <tr data-instance-name="{{ instance.instance_name }}">
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-sm bg-success rounded-circle d-flex align-items-center justify-content-center me-2">
@@ -128,20 +128,20 @@
                                             <strong>{{ instance.instance_name }}</strong>
                                         </div>
                                     </td>
-                                    <td>{{ instance.phone_number or '-' }}</td>
+                                    <td class="phone-number">{{ instance.phone_number or '-' }}</td>
                                     <td>
                                         {% if instance.status == 'connected' %}
-                                            <span class="badge bg-success">Conectado</span>
+                                            <span class="badge bg-success status-badge">Conectado</span>
                                         {% elif instance.status == 'connecting' %}
-                                            <span class="badge bg-warning">Conectando</span>
+                                            <span class="badge bg-warning status-badge">Conectando</span>
                                         {% else %}
-                                            <span class="badge bg-danger">Desconectado</span>
+                                            <span class="badge bg-danger status-badge">Desconectado</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ instance.created_at.strftime('%d/%m/%Y') }}</td>
-                                    <td>
+                                    <td class="instance-actions">
                                         {% if instance.status == 'connecting' %}
-                                        <button class="btn btn-sm btn-info me-1" onclick="showQRCode('{{ instance.instance_name }}')">
+                                        <button class="btn btn-sm btn-info me-1 qr-button" onclick="showQRCode('{{ instance.instance_name }}')">
                                             <i class="fas fa-qrcode"></i> QR Code
                                         </button>
                                         {% endif %}
@@ -562,14 +562,67 @@ function showQRCode(instanceName) {
 }
 
 // Auto refresh instances status every 10 seconds
-setInterval(() => {
-    const instances = document.querySelectorAll('[data-instance-status]');
-    instances.forEach(instance => {
-        const instanceName = instance.dataset.instanceName;
+function updateInstanceStatus() {
+    const instanceRows = document.querySelectorAll('tr[data-instance-name]');
+    instanceRows.forEach(row => {
+        const instanceName = row.dataset.instanceName;
         if (instanceName) {
-            // You could implement status checking here
+            fetch(`/whatsapp/instances/status/${instanceName}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        // Update status badge
+                        const statusCell = row.querySelector('.status-badge');
+                        const phoneCell = row.querySelector('.phone-number');
+                        const actionsCell = row.querySelector('.instance-actions');
+                        
+                        if (statusCell) {
+                            let badgeClass = 'bg-danger';
+                            let statusText = 'Desconectado';
+                            
+                            if (data.status === 'connected') {
+                                badgeClass = 'bg-success';
+                                statusText = 'Conectado';
+                            } else if (data.status === 'connecting') {
+                                badgeClass = 'bg-warning';
+                                statusText = 'Conectando';
+                            }
+                            
+                            statusCell.className = `badge ${badgeClass} status-badge`;
+                            statusCell.textContent = statusText;
+                        }
+                        
+                        // Update phone number
+                        if (phoneCell && data.phone_number) {
+                            phoneCell.textContent = data.phone_number;
+                        }
+                        
+                        // Update actions (show/hide QR code button)
+                        if (actionsCell) {
+                            const qrButton = actionsCell.querySelector('.qr-button');
+                            if (data.status === 'connecting' && !qrButton) {
+                                // Add QR code button
+                                const newQrButton = document.createElement('button');
+                                newQrButton.className = 'btn btn-sm btn-info me-1 qr-button';
+                                newQrButton.onclick = () => showQRCode(instanceName);
+                                newQrButton.innerHTML = '<i class="fas fa-qrcode"></i> QR Code';
+                                actionsCell.insertBefore(newQrButton, actionsCell.firstChild);
+                            } else if (data.status !== 'connecting' && qrButton) {
+                                // Remove QR code button
+                                qrButton.remove();
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('Status check failed for', instanceName, error);
+                });
         }
     });
-}, 10000);
+}
+
+// Update status immediately and then every 10 seconds
+updateInstanceStatus();
+setInterval(updateInstanceStatus, 10000);
 </script>
 {% endblock %}

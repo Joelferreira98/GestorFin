@@ -200,11 +200,97 @@ def get_qrcode(instance_name):
         logging.error(f"Error getting QR code: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@whatsapp_bp.route('/instances/status/<instance_name>')
+@login_required
+def check_instance_status(instance_name):
+    """Check the connection status of a WhatsApp instance"""
+    user = get_current_user()
+    
+    # Check if user owns this instance
+    instance = UserWhatsAppInstance.query.filter_by(
+        instance_name=instance_name, 
+        user_id=user.id
+    ).first_or_404()
+    
+    # Get Evolution API settings
+    system_settings = SystemSettings.query.first()
+    
+    if not system_settings or not system_settings.evolution_enabled:
+        return jsonify({'error': 'Evolution API não configurada'}), 400
+    
+    try:
+        # Clean the API key and URL from any potential issues
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
+        response = requests.get(
+            f"{clean_api_url}/instance/fetchInstances",
+            headers={
+                'apikey': clean_api_key,
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            instances_data = response.json()
+            
+            # Find our specific instance in the response
+            for api_instance in instances_data:
+                if api_instance.get('name') == instance_name:
+                    connection_status = api_instance.get('connectionStatus', 'disconnected')
+                    owner_jid = api_instance.get('ownerJid')
+                    profile_name = api_instance.get('profileName')
+                    
+                    # Update local database with current status
+                    if connection_status == 'open':
+                        instance.status = 'connected'
+                        if owner_jid:
+                            # Extract phone number from JID (format: 5511999999999@s.whatsapp.net)
+                            phone_number = owner_jid.split('@')[0]
+                            instance.phone_number = phone_number
+                    elif connection_status in ['close', 'disconnected']:
+                        instance.status = 'disconnected'
+                    else:
+                        instance.status = 'connecting'
+                    
+                    db.session.commit()
+                    
+                    return jsonify({
+                        'status': instance.status,
+                        'phone_number': instance.phone_number,
+                        'profile_name': profile_name,
+                        'connection_status': connection_status
+                    })
+            
+            # Instance not found in API response
+            return jsonify({'error': 'Instância não encontrada na API'})
+        else:
+            return jsonify({'error': f'Erro da API: {response.status_code}'}), response.status_code
+    
+    except Exception as e:
+        logging.error(f"Error checking instance status: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @whatsapp_bp.route('/instances/delete/<int:instance_id>', methods=['POST'])
 @login_required
 def delete_instance(instance_id):
     user = get_current_user()
     instance = UserWhatsAppInstance.query.filter_by(id=instance_id, user_id=user.id).first_or_404()
+    
+    # Try to delete from Evolution API as well
+    system_settings = SystemSettings.query.first()
+    if system_settings and system_settings.evolution_enabled:
+        try:
+            clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+            clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+            
+            requests.delete(
+                f"{clean_api_url}/instance/delete/{instance.instance_name}",
+                headers={'apikey': clean_api_key},
+                timeout=10
+            )
+        except Exception as e:
+            logging.warning(f"Failed to delete instance from API: {e}")
     
     db.session.delete(instance)
     db.session.commit()
