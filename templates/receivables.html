@@ -152,12 +152,16 @@
                             </td>
                             <td>
                                 {{ receivable.due_date.strftime('%d/%m/%Y') }}
-                                {% set days_diff = (receivable.due_date - (moment().date() if moment else receivable.due_date))|int %}
-                                {% if receivable.status == 'pending' %}
+                                {% set days_diff = (receivable.due_date - today).days %}
+                                {% if receivable.status in ['pending', 'overdue'] %}
                                     {% if days_diff < 0 %}
                                         <br><small class="text-danger">{{ -days_diff }} dias em atraso</small>
-                                    {% elif days_diff <= 3 %}
+                                    {% elif days_diff == 0 %}
+                                        <br><small class="text-warning"><strong>Vence hoje!</strong></small>
+                                    {% elif days_diff <= 7 %}
                                         <br><small class="text-warning">Vence em {{ days_diff }} dias</small>
+                                    {% elif days_diff <= 30 %}
+                                        <br><small class="text-info">Vence em {{ days_diff }} dias</small>
                                     {% endif %}
                                 {% endif %}
                             </td>

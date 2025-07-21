@@ -81,7 +81,8 @@ def index():
                          months=months,
                          years=years,
                          current_month=filter_month,
-                         current_year=filter_year)
+                         current_year=filter_year,
+                         today=date.today())
 
 
 
