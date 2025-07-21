@@ -66,8 +66,11 @@
     <div class="row">
         <div class="col-lg-6">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Contas a Receber Recentes</h6>
+                    <span class="badge bg-success">
+                        Total: R$ {{ "%.2f"|format(receivables_total) if receivables_total else "0.00" }}
+                    </span>
                 </div>
                 <div class="card-body">
                     {% if recent_receivables %}
@@ -107,8 +110,11 @@
         
         <div class="col-lg-6">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">Contas a Pagar Recentes</h6>
+                    <span class="badge bg-danger">
+                        Total: R$ {{ "%.2f"|format(payables_total) if payables_total else "0.00" }}
+                    </span>
                 </div>
                 <div class="card-body">
                     {% if recent_payables %}

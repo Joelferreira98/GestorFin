@@ -20,12 +20,18 @@ def index():
     recent_payables = Payable.query.filter_by(user_id=user.id).order_by(Payable.created_at.desc()).limit(5).all()
     recent_installment_sales = InstallmentSale.query.filter_by(user_id=user.id).order_by(InstallmentSale.created_at.desc()).limit(5).all()
     
+    # Calcular totais
+    receivables_total = sum(r.amount for r in recent_receivables)
+    payables_total = sum(p.amount for p in recent_payables)
+    
     return render_template('accounts.html', 
                          clients=clients, 
                          suppliers=suppliers,
                          recent_receivables=recent_receivables,
                          recent_payables=recent_payables,
-                         recent_installment_sales=recent_installment_sales)
+                         recent_installment_sales=recent_installment_sales,
+                         receivables_total=receivables_total,
+                         payables_total=payables_total)
 
 @accounts_bp.route('/add_receivable', methods=['POST'])
 @login_required
