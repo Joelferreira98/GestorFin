@@ -102,22 +102,55 @@ def format_phone(phone):
 
 def send_whatsapp_message(user_id, phone, message):
     """Send WhatsApp message via Evolution API"""
+    from models import SystemSettings, UserWhatsAppInstance
+    import logging
+    
     try:
-        api_url = os.environ.get('EVOLUTION_API_URL', 'https://api.evolutionapi.com')
-        api_key = os.environ.get('EVOLUTION_API_KEY', 'default_key')
+        # Get system settings
+        system_settings = SystemSettings.query.first()
+        if not system_settings or not system_settings.evolution_enabled:
+            logging.warning("Evolution API not configured or disabled")
+            return False
         
+        # Get user's first connected WhatsApp instance
+        instance = UserWhatsAppInstance.query.filter_by(
+            user_id=user_id, 
+            status='connected'
+        ).first()
+        
+        if not instance:
+            logging.warning(f"No connected WhatsApp instance found for user {user_id}")
+            return False
+        
+        # Clean API settings
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
+        # Format phone number
+        formatted_phone = format_phone(phone)
+        if not formatted_phone:
+            logging.warning(f"Invalid phone number: {phone}")
+            return False
+        
+        # Send message via Evolution API
         response = requests.post(
-            f"{api_url}/message/sendText",
+            f"{clean_api_url}/message/sendText/{instance.instance_name}",
             headers={
-                'apikey': api_key,
+                'apikey': clean_api_key,
                 'Content-Type': 'application/json'
             },
             json={
-                'number': phone,
-                'text': message
-            }
+                'number': formatted_phone,
+                'textMessage': {
+                    'text': message
+                }
+            },
+            timeout=10
         )
         
-        return response.status_code == 200
-    except:
+        logging.debug(f"WhatsApp message response: {response.status_code} - {response.text}")
+        
+        return response.status_code in [200, 201]
+    except Exception as e:
+        logging.error(f"Error sending WhatsApp message: {str(e)}")
         return False

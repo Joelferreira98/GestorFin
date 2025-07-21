@@ -47,13 +47,16 @@ def add():
         confirmation_url = url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)
         message = f"Olá {client.name}! Você tem uma venda parcelada para confirmar. Acesse: {confirmation_url}"
         
-        # Log message (would send via WhatsApp in production)
+        # Actually send the message via WhatsApp
+        success = send_whatsapp_message(user.id, client.whatsapp, message)
+        
+        # Log message
         whatsapp_msg = WhatsAppMessage(
             user_id=user.id,
             client_id=client_id,
             message_type='confirmation',
             content=message,
-            status='sent'
+            status='sent' if success else 'failed'
         )
         db.session.add(whatsapp_msg)
         db.session.commit()
@@ -132,12 +135,15 @@ def approve(sale_id):
     if client and client.whatsapp:
         message = f"Olá {client.name}! Sua venda parcelada foi APROVADA. As parcelas foram geradas no sistema."
         
+        # Actually send the message via WhatsApp
+        success = send_whatsapp_message(user.id, client.whatsapp, message)
+        
         whatsapp_msg = WhatsAppMessage(
             user_id=user.id,
             client_id=sale.client_id,
             message_type='approval',
             content=message,
-            status='sent'
+            status='sent' if success else 'failed'
         )
         db.session.add(whatsapp_msg)
         db.session.commit()
@@ -161,12 +167,15 @@ def reject(sale_id):
     if client and client.whatsapp:
         message = f"Olá {client.name}! Infelizmente sua venda parcelada foi REJEITADA. Motivo: {sale.approval_notes}"
         
+        # Actually send the message via WhatsApp
+        success = send_whatsapp_message(user.id, client.whatsapp, message)
+        
         whatsapp_msg = WhatsAppMessage(
             user_id=user.id,
             client_id=sale.client_id,
             message_type='rejection',
             content=message,
-            status='sent'
+            status='sent' if success else 'failed'
         )
         db.session.add(whatsapp_msg)
         db.session.commit()
