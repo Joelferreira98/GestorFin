@@ -144,6 +144,12 @@
                                         <button class="btn btn-sm btn-info me-1 qr-button" onclick="showQRCode('{{ instance.instance_name }}')">
                                             <i class="fas fa-qrcode"></i> QR Code
                                         </button>
+                                        {% elif instance.status == 'connected' %}
+                                        <form method="POST" action="{{ url_for('whatsapp.logout_instance', instance_name=instance.instance_name) }}" class="d-inline me-1" onsubmit="return confirm('Tem certeza que deseja desconectar o WhatsApp desta instância?')">
+                                            <button type="submit" class="btn btn-sm btn-warning disconnect-button">
+                                                <i class="fas fa-sign-out-alt"></i> Desconectar
+                                            </button>
+                                        </form>
                                         {% endif %}
                                         <form method="POST" action="{{ url_for('whatsapp.delete_instance', instance_id=instance.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta instância?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -597,19 +603,49 @@ function updateInstanceStatus() {
                             phoneCell.textContent = data.phone_number;
                         }
                         
-                        // Update actions (show/hide QR code button)
+                        // Update actions (show/hide QR code and disconnect buttons)
                         if (actionsCell) {
                             const qrButton = actionsCell.querySelector('.qr-button');
+                            const disconnectButton = actionsCell.querySelector('.disconnect-button');
+                            
                             if (data.status === 'connecting' && !qrButton) {
+                                // Remove disconnect button if it exists
+                                if (disconnectButton) {
+                                    disconnectButton.closest('form').remove();
+                                }
                                 // Add QR code button
                                 const newQrButton = document.createElement('button');
                                 newQrButton.className = 'btn btn-sm btn-info me-1 qr-button';
                                 newQrButton.onclick = () => showQRCode(instanceName);
                                 newQrButton.innerHTML = '<i class="fas fa-qrcode"></i> QR Code';
                                 actionsCell.insertBefore(newQrButton, actionsCell.firstChild);
-                            } else if (data.status !== 'connecting' && qrButton) {
-                                // Remove QR code button
-                                qrButton.remove();
+                            } else if (data.status === 'connected' && !disconnectButton) {
+                                // Remove QR code button if it exists
+                                if (qrButton) {
+                                    qrButton.remove();
+                                }
+                                // Add disconnect button
+                                const disconnectForm = document.createElement('form');
+                                disconnectForm.method = 'POST';
+                                disconnectForm.action = `/whatsapp/instances/logout/${instanceName}`;
+                                disconnectForm.className = 'd-inline me-1';
+                                disconnectForm.onsubmit = () => confirm('Tem certeza que deseja desconectar o WhatsApp desta instância?');
+                                
+                                const disconnectBtn = document.createElement('button');
+                                disconnectBtn.type = 'submit';
+                                disconnectBtn.className = 'btn btn-sm btn-warning disconnect-button';
+                                disconnectBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Desconectar';
+                                
+                                disconnectForm.appendChild(disconnectBtn);
+                                actionsCell.insertBefore(disconnectForm, actionsCell.firstChild);
+                            } else if (data.status === 'disconnected') {
+                                // Remove both buttons
+                                if (qrButton) {
+                                    qrButton.remove();
+                                }
+                                if (disconnectButton) {
+                                    disconnectButton.closest('form').remove();
+                                }
                             }
                         }
                     }

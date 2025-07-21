@@ -271,6 +271,60 @@ def check_instance_status(instance_name):
         logging.error(f"Error checking instance status: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@whatsapp_bp.route('/instances/logout/<instance_name>', methods=['POST'])
+@login_required
+def logout_instance(instance_name):
+    """Disconnect WhatsApp from instance"""
+    user = get_current_user()
+    
+    # Check if user owns this instance
+    instance = UserWhatsAppInstance.query.filter_by(
+        instance_name=instance_name, 
+        user_id=user.id
+    ).first_or_404()
+    
+    # Get Evolution API settings
+    system_settings = SystemSettings.query.first()
+    
+    if not system_settings or not system_settings.evolution_enabled:
+        flash('Evolution API não configurada!', 'error')
+        return redirect(url_for('whatsapp.index'))
+    
+    try:
+        # Clean the API key and URL from any potential issues
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
+        response = requests.delete(
+            f"{clean_api_url}/instance/logout/{instance_name}",
+            headers={
+                'apikey': clean_api_key,
+            },
+            timeout=10
+        )
+        
+        logging.debug(f"Logout response: {response.status_code} - {response.text}")
+        
+        if response.status_code in [200, 201]:
+            # Update local database status
+            instance.status = 'disconnected'
+            instance.phone_number = None
+            db.session.commit()
+            
+            flash(f'WhatsApp desconectado da instância "{instance_name}" com sucesso!', 'success')
+        else:
+            flash(f'Erro ao desconectar: {response.status_code}', 'error')
+    
+    except requests.exceptions.Timeout:
+        flash('Tempo limite esgotado ao tentar desconectar.', 'error')
+    except requests.exceptions.ConnectionError:
+        flash('Erro de conexão com a API.', 'error')
+    except Exception as e:
+        logging.error(f"Error logging out instance: {str(e)}")
+        flash(f'Erro inesperado: {str(e)}', 'error')
+    
+    return redirect(url_for('whatsapp.index'))
+
 @whatsapp_bp.route('/instances/delete/<int:instance_id>', methods=['POST'])
 @login_required
 def delete_instance(instance_id):
