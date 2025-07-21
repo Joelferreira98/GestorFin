@@ -91,11 +91,16 @@ def format_phone(phone):
     
     phone = re.sub(r'[^\d]', '', phone)
     
-    if len(phone) == 10:
+    # Handle different Brazilian phone formats
+    if len(phone) == 10:  # (11) 9999-9999
         phone = '55' + phone
-    elif len(phone) == 11:
+    elif len(phone) == 11:  # (11) 99999-9999
         phone = '55' + phone
-    elif not phone.startswith('55'):
+    elif len(phone) == 12 and phone.startswith('55'):  # 55119999999999
+        phone = phone
+    elif len(phone) == 13 and phone.startswith('55'):  # 5511999999999
+        phone = phone
+    elif not phone.startswith('55') and len(phone) >= 10:
         phone = '55' + phone
     
     return phone

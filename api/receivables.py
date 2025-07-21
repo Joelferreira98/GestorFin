@@ -144,9 +144,9 @@ Obrigado!"""
     success = send_whatsapp_message(user.id, client.whatsapp, message)
     
     if success:
-        flash(f'Cobrança enviada via WhatsApp para {client.name}!', 'success')
+        flash(f'Cobrança enviada via WhatsApp para {client.name} ({client.whatsapp})!', 'success')
     else:
-        flash('Erro ao enviar cobrança: Verifique se o WhatsApp está conectado e o número é válido.', 'error')
+        flash(f'Erro ao enviar cobrança: O número {client.whatsapp} não existe no WhatsApp ou não está válido. Verifique o número do cliente.', 'error')
     
     return redirect(url_for('receivables.index'))
 
