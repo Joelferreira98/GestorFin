@@ -227,13 +227,21 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="client_id" class="form-label">Cliente *</label>
-                        <select class="form-select" id="client_id" name="client_id" required>
-                            <option value="">Selecione um cliente</option>
-                            {% for client in clients %}
-                            <option value="{{ client.id }}">{{ client.name }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="client_search" class="form-label">Cliente *</label>
+                        <div class="client-search-container">
+                            <input type="text" class="form-control" id="client_search" placeholder="Digite para pesquisar cliente..." autocomplete="off">
+                            <input type="hidden" id="client_id" name="client_id" required>
+                            <div id="client_dropdown" class="client-dropdown" style="display: none;">
+                                <div class="dropdown-item-text text-muted">
+                                    <i class="fas fa-search me-2"></i>Digite para pesquisar...
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <button type="button" class="dropdown-item text-primary" id="add_new_client">
+                                    <i class="fas fa-plus me-2"></i>Cadastrar novo cliente
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-text">Pesquise pelo nome do cliente ou cadastre um novo</div>
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Descrição *</label>
@@ -311,6 +319,61 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.client-search-container {
+    position: relative;
+}
+
+.client-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.client-dropdown .dropdown-item {
+    padding: 0.75rem 1rem;
+    border: none;
+    text-align: left;
+    width: 100%;
+    background: none;
+    display: block;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.client-dropdown .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.client-dropdown .dropdown-item.text-primary:hover {
+    background-color: #e3f2fd;
+}
+
+.avatar-xs {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.94-.94-.94-.94L1.36 5.8l-.94.94.94.94Zm1.4-1.4L5.16 3.87 6.1 4.8l-1.4 1.4-1.4-1.4Z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
+}
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script>
 function editReceivable(id, clientId, description, amount, dueDate, status) {
@@ -322,11 +385,120 @@ function editReceivable(id, clientId, description, amount, dueDate, status) {
     document.getElementById('edit_status').value = status;
 }
 
-// Set default due date to next month
+// Client search functionality
+const clients = [
+    {% for client in clients %}
+    {id: {{ client.id }}, name: "{{ client.name }}", document: "{{ client.document }}"},
+    {% endfor %}
+];
+
 document.addEventListener('DOMContentLoaded', function() {
+    const clientSearch = document.getElementById('client_search');
+    const clientIdInput = document.getElementById('client_id');
+    const clientDropdown = document.getElementById('client_dropdown');
+    const addNewClientBtn = document.getElementById('add_new_client');
+    
+    // Filter and show clients
+    function filterClients(searchTerm) {
+        const filtered = clients.filter(client => 
+            client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.document.includes(searchTerm)
+        );
+        
+        let html = '';
+        
+        if (searchTerm.length > 0) {
+            html += `<div class="dropdown-item-text text-muted small">
+                        <i class="fas fa-search me-2"></i>Resultados para "${searchTerm}"
+                    </div>
+                    <div class="dropdown-divider"></div>`;
+        }
+        
+        if (filtered.length === 0 && searchTerm.length > 0) {
+            html += `<div class="dropdown-item-text text-muted">
+                        <i class="fas fa-search me-2"></i>Nenhum cliente encontrado
+                    </div>
+                    <div class="dropdown-divider"></div>`;
+        } else {
+            filtered.forEach(client => {
+                html += `<button type="button" class="dropdown-item client-option" data-id="${client.id}" data-name="${client.name}">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-xs bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                    <i class="fas fa-user text-white" style="font-size: 10px;"></i>
+                                </div>
+                                <div>
+                                    <strong>${client.name}</strong>
+                                    <br><small class="text-muted">${client.document}</small>
+                                </div>
+                            </div>
+                        </button>`;
+            });
+        }
+        
+        html += `<div class="dropdown-divider"></div>
+                <button type="button" class="dropdown-item text-primary" id="add_new_client_search">
+                    <i class="fas fa-plus me-2"></i>Cadastrar novo cliente
+                </button>`;
+        
+        clientDropdown.innerHTML = html;
+        
+        // Add event listeners to client options
+        document.querySelectorAll('.client-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                clientSearch.value = name;
+                clientIdInput.value = id;
+                clientDropdown.style.display = 'none';
+                clientSearch.classList.add('is-valid');
+            });
+        });
+        
+        // Re-add event listener to new client button
+        const newBtn = document.getElementById('add_new_client_search');
+        if (newBtn) {
+            newBtn.addEventListener('click', function() {
+                window.open('/clients', '_blank');
+            });
+        }
+    }
+    
+    // Search input events
+    clientSearch.addEventListener('input', function() {
+        const searchTerm = this.value;
+        filterClients(searchTerm);
+        clientDropdown.style.display = 'block';
+        
+        if (searchTerm === '') {
+            clientIdInput.value = '';
+            clientSearch.classList.remove('is-valid');
+        }
+    });
+    
+    clientSearch.addEventListener('focus', function() {
+        filterClients(this.value);
+        clientDropdown.style.display = 'block';
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.client-search-container')) {
+            clientDropdown.style.display = 'none';
+        }
+    });
+    
+    // Add new client button
+    addNewClientBtn.addEventListener('click', function() {
+        window.open('/clients', '_blank');
+    });
+    
+    // Set default due date to next month
     const today = new Date();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
     document.getElementById('due_date').value = nextMonth.toISOString().split('T')[0];
+    
+    // Initialize dropdown
+    filterClients('');
 });
 </script>
 {% endblock %}
