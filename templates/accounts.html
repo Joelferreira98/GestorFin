@@ -87,7 +87,7 @@
                                 <tbody>
                                     {% for receivable in recent_receivables %}
                                     <tr>
-                                        <td>{{ receivable.client.name }}</td>
+                                        <td>{{ receivable.client.name if receivable.client else 'Sem cliente' }}</td>
                                         <td>{{ receivable.description[:25] }}{% if receivable.description|length > 25 %}...{% endif %}</td>
                                         <td>R$ {{ "%.2f"|format(receivable.amount) }}</td>
                                         <td>{{ receivable.due_date.strftime('%d/%m/%Y') }}</td>
