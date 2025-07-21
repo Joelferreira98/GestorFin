@@ -10,6 +10,7 @@ from api.clients import clients_bp
 from api.receivables import receivables_bp
 from api.payables import payables_bp
 from api.installment_sales import installment_sales_bp
+from api.accounts import accounts_bp
 from api.whatsapp import whatsapp_bp
 from api.reminders import reminders_bp
 from api.admin import admin_bp
@@ -21,6 +22,7 @@ app.register_blueprint(clients_bp, url_prefix='/api')
 app.register_blueprint(receivables_bp, url_prefix='/api')
 app.register_blueprint(payables_bp, url_prefix='/api')
 app.register_blueprint(installment_sales_bp, url_prefix='/api')
+app.register_blueprint(accounts_bp, url_prefix='/api')
 app.register_blueprint(whatsapp_bp, url_prefix='/api')
 app.register_blueprint(reminders_bp, url_prefix='/api')
 app.register_blueprint(admin_bp, url_prefix='/api')

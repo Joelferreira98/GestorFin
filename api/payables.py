@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
 from models import Payable, Supplier, UserPlan
 from utils import login_required, get_current_user
-from datetime import datetime
+from datetime import datetime, date
+from sqlalchemy import extract
 
 payables_bp = Blueprint('payables', __name__)
 
@@ -10,12 +11,47 @@ payables_bp = Blueprint('payables', __name__)
 @login_required
 def index():
     user = get_current_user()
+    
+    # Get month and year filter from request
+    filter_month = request.args.get('month', str(date.today().month), type=int)
+    filter_year = request.args.get('year', str(date.today().year), type=int)
+    
+    # Filter payables by month and year
     payables = db.session.query(Payable, Supplier).outerjoin(Supplier).filter(
-        Payable.user_id == user.id
+        Payable.user_id == user.id,
+        extract('month', Payable.due_date) == filter_month,
+        extract('year', Payable.due_date) == filter_year
     ).order_by(Payable.due_date.asc()).all()
     
     suppliers = Supplier.query.filter_by(user_id=user.id).all()
-    return render_template('payables.html', payables=payables, suppliers=suppliers)
+    
+    # Generate month options for the filter
+    months = [
+        {'value': 1, 'name': 'Janeiro'},
+        {'value': 2, 'name': 'Fevereiro'},
+        {'value': 3, 'name': 'Março'},
+        {'value': 4, 'name': 'Abril'},
+        {'value': 5, 'name': 'Maio'},
+        {'value': 6, 'name': 'Junho'},
+        {'value': 7, 'name': 'Julho'},
+        {'value': 8, 'name': 'Agosto'},
+        {'value': 9, 'name': 'Setembro'},
+        {'value': 10, 'name': 'Outubro'},
+        {'value': 11, 'name': 'Novembro'},
+        {'value': 12, 'name': 'Dezembro'},
+    ]
+    
+    # Generate year options (current year and previous/next years)
+    current_year = date.today().year
+    years = list(range(current_year - 2, current_year + 3))
+    
+    return render_template('payables.html', 
+                         payables=payables, 
+                         suppliers=suppliers,
+                         months=months,
+                         years=years,
+                         current_month=filter_month,
+                         current_year=filter_year)
 
 @payables_bp.route('/add', methods=['POST'])
 @login_required
