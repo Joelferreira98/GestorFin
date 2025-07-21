@@ -492,6 +492,62 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Troubleshooting Card -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-tools me-1"></i>Solução de Problemas Comuns
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="troubleshootingAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                                    <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                    <strong>Erro 401 - Unauthorized (Chave API inválida)</strong>
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#troubleshootingAccordion">
+                                <div class="accordion-body">
+                                    <div class="alert alert-danger">
+                                        <strong>Problema:</strong> A chave da API está incorreta, expirou ou não tem permissões.
+                                    </div>
+                                    
+                                    <h6><i class="fas fa-wrench me-1"></i>Soluções:</h6>
+                                    <ol>
+                                        <li><strong>Verificar a chave da API:</strong>
+                                            <ul>
+                                                <li>Certifique-se de que copiou a chave completa do seu painel Evolution</li>
+                                                <li>Verifique se não há espaços extras no início ou fim</li>
+                                                <li>A chave não deve conter quebras de linha</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Regenerar chave:</strong>
+                                            <ul>
+                                                <li>Acesse o painel administrativo da sua Evolution API</li>
+                                                <li>Gere uma nova API Key</li>
+                                                <li>Copie e cole a nova chave aqui</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Testar manualmente:</strong>
+                                            <pre class="bg-dark text-light p-2 rounded small"><code>curl --request GET \
+  --url https://sua-api.com/instance/fetchInstances \
+  --header 'apikey: sua-chave-aqui'</code></pre>
+                                        </li>
+                                    </ol>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        <strong>Dica:</strong> Se o erro persistir, entre em contato com quem administra seu servidor Evolution API.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

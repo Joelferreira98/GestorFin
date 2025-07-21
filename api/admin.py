@@ -118,26 +118,37 @@ def test_evolution_api():
         return redirect(url_for('admin.index'))
     
     try:
-        # Test connection to Evolution API
-        headers = {
-            'apikey': settings.evolution_api_key,
-            'Content-Type': 'application/json'
-        }
-        
+        # Test connection to Evolution API using the correct structure
         response = requests.get(
-            f"{settings.evolution_api_url}/instance/fetchInstances",
-            headers=headers,
+            f"{settings.evolution_api_url.rstrip('/')}/instance/fetchInstances",
+            headers={
+                'apikey': settings.evolution_api_key
+            },
             timeout=10
         )
         
         if response.status_code == 200:
             instances = response.json()
-            flash(f'Conexão com Evolution API bem-sucedida! {len(instances)} instância(s) encontrada(s).', 'success')
+            instance_count = len(instances) if isinstance(instances, list) else 0
+            flash(f'✓ Conexão com Evolution API bem-sucedida! {instance_count} instância(s) encontrada(s).', 'success')
+        elif response.status_code == 401:
+            flash('✗ Chave da API inválida ou incorreta. Verifique a chave no seu painel da Evolution API.', 'error')
+        elif response.status_code == 404:
+            flash('✗ URL da API incorreta ou serviço indisponível. Verifique a URL.', 'error')
         else:
-            flash(f'Erro na conexão: {response.status_code} - {response.text}', 'error')
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('message', f'Código de erro: {response.status_code}')
+            except:
+                error_msg = f'Código de erro: {response.status_code}'
+            flash(f'✗ Erro na conexão: {error_msg}', 'error')
             
+    except requests.exceptions.ConnectionError:
+        flash('✗ Erro de conexão: Não foi possível conectar ao servidor. Verifique a URL.', 'error')
+    except requests.exceptions.Timeout:
+        flash('✗ Tempo limite esgotado: Servidor não respondeu em 10 segundos.', 'error')
     except requests.exceptions.RequestException as e:
-        flash(f'Erro de conexão com Evolution API: {str(e)}', 'error')
+        flash(f'✗ Erro de conexão: {str(e)}', 'error')
     
     return redirect(url_for('admin.index'))
 
