@@ -87,6 +87,11 @@
                 <i class="fas fa-cog me-1"></i>Configurações
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsapp-content" type="button" role="tab">
+                <i class="fab fa-whatsapp me-1"></i>Evolution API
+            </button>
+        </li>
     </ul>
     
     <div class="tab-content" id="adminTabsContent">
@@ -235,29 +240,7 @@
                 </div>
             </div>
             
-            <!-- Evolution API Settings -->
-            <div class="card shadow mt-4">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-success">Configurações Evolution API</h6>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-1"></i>
-                        <strong>Evolution API:</strong> Configure as variáveis de ambiente EVOLUTION_API_URL e EVOLUTION_API_KEY para conectar com a API do WhatsApp.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>URL da API:</h6>
-                            <code>{{ url_api or 'Não configurada' }}</code>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Status da API:</h6>
-                            <span class="badge bg-warning">Verificar conectividade</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
             
             <!-- Plan Limits -->
             <div class="card shadow mt-4">
@@ -300,6 +283,212 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- WhatsApp Evolution API Tab -->
+        <div class="tab-pane fade" id="whatsapp-content" role="tabpanel">
+            <div class="card shadow mt-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fab fa-whatsapp me-2"></i>Configuração Evolution API
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Evolution API</strong> - Configure sua instância da Evolution API para integração WhatsApp
+                        <hr>
+                        <small>
+                            <strong>Requisitos:</strong><br>
+                            • Servidor Evolution API configurado e rodando<br>
+                            • Chave de API válida<br>
+                            • Instância WhatsApp criada e conectada
+                        </small>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('admin.update_evolution_api') }}">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="evolution_api_url" class="form-label">
+                                        <i class="fas fa-link me-1"></i>URL da Evolution API
+                                    </label>
+                                    <input type="url" class="form-control" id="evolution_api_url" name="evolution_api_url" 
+                                           placeholder="https://api.evolutionapi.com" 
+                                           value="{{ system_settings.evolution_api_url if system_settings else '' }}">
+                                    <small class="form-text text-muted">URL base do servidor Evolution API</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="evolution_api_key" class="form-label">
+                                        <i class="fas fa-key me-1"></i>Chave da API
+                                    </label>
+                                    <input type="text" class="form-control" id="evolution_api_key" name="evolution_api_key" 
+                                           placeholder="sua-chave-da-api"
+                                           value="{{ system_settings.evolution_api_key if system_settings else '' }}">
+                                    <small class="form-text text-muted">API Key fornecida pelo Evolution API</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="evolution_default_instance" class="form-label">
+                                        <i class="fas fa-mobile-alt me-1"></i>Instância Padrão
+                                    </label>
+                                    <input type="text" class="form-control" id="evolution_default_instance" name="evolution_default_instance" 
+                                           placeholder="minha-instancia"
+                                           value="{{ system_settings.evolution_default_instance if system_settings else '' }}">
+                                    <small class="form-text text-muted">Nome da instância WhatsApp padrão</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="evolution_webhook_url" class="form-label">
+                                        <i class="fas fa-webhook me-1"></i>URL do Webhook (Opcional)
+                                    </label>
+                                    <input type="url" class="form-control" id="evolution_webhook_url" name="evolution_webhook_url" 
+                                           placeholder="https://seu-sistema.com/webhook"
+                                           value="{{ system_settings.evolution_webhook_url if system_settings else '' }}">
+                                    <small class="form-text text-muted">URL para receber notificações da API</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="evolution_enabled" name="evolution_enabled"
+                                       {% if system_settings and system_settings.evolution_enabled %}checked{% endif %}>
+                                <label class="form-check-label" for="evolution_enabled">
+                                    <strong>Ativar Integration WhatsApp</strong>
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Habilita o envio de mensagens WhatsApp pelo sistema
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Salvar Configurações
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="testEvolutionAPI()">
+                                <i class="fas fa-plug me-1"></i>Testar Conexão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- API Status Card -->
+            <div class="card shadow mt-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Status da Integração</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h3 mb-2">
+                                    {% if system_settings and system_settings.evolution_enabled %}
+                                        <span class="badge bg-success">Ativada</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Desativada</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Status da Integração</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h3 mb-2">
+                                    {% if system_settings and system_settings.evolution_api_url %}
+                                        <span class="badge bg-info">Configurada</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pendente</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">API URL</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="h3 mb-2">
+                                    <span class="badge bg-secondary">Verificar</span>
+                                </div>
+                                <small class="text-muted">Conectividade</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if system_settings and system_settings.evolution_api_url %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><i class="fas fa-info-circle me-1"></i>Configurações Atuais:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>URL da API:</strong>
+                                    <code>{{ system_settings.evolution_api_url }}</code>
+                                </li>
+                                {% if system_settings.evolution_default_instance %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Instância Padrão:</strong>
+                                    <code>{{ system_settings.evolution_default_instance }}</code>
+                                </li>
+                                {% endif %}
+                                {% if system_settings.evolution_webhook_url %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <strong>Webhook URL:</strong>
+                                    <code>{{ system_settings.evolution_webhook_url }}</code>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Help Card -->
+            <div class="card shadow mt-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-question-circle me-1"></i>Como Configurar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-step-forward me-1"></i>Passos:</h6>
+                            <ol class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>1. Configure um servidor Evolution API</li>
+                                <li><i class="fas fa-check text-success me-2"></i>2. Obtenha a URL e API Key</li>
+                                <li><i class="fas fa-check text-success me-2"></i>3. Crie uma instância WhatsApp</li>
+                                <li><i class="fas fa-check text-success me-2"></i>4. Configure os campos acima</li>
+                                <li><i class="fas fa-check text-success me-2"></i>5. Teste a conexão</li>
+                                <li><i class="fas fa-check text-success me-2"></i>6. Ative a integração</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-external-link-alt me-1"></i>Links Úteis:</h6>
+                            <ul class="list-unstyled">
+                                <li><a href="https://doc.evolutionapi.com" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-book me-2"></i>Documentação Evolution API
+                                </a></li>
+                                <li><a href="https://github.com/EvolutionAPI/evolution-api" target="_blank" class="text-decoration-none">
+                                    <i class="fab fa-github me-2"></i>Repositório GitHub
+                                </a></li>
+                                <li><a href="#" class="text-decoration-none">
+                                    <i class="fas fa-video me-2"></i>Tutorial de Instalação
+                                </a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,5 +542,55 @@ function showUserModal(userId, username, currentPlan) {
     document.getElementById('modal_username').textContent = username;
     document.getElementById('plan_name').value = currentPlan;
 }
+
+function testEvolutionAPI() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testando...';
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('evolution_api_url', document.getElementById('evolution_api_url').value);
+    formData.append('evolution_api_key', document.getElementById('evolution_api_key').value);
+    
+    // Make request
+    fetch('/admin/evolution_api/test', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload(); // Reload to show flash messages
+        } else {
+            throw new Error('Erro na requisição');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao testar a conexão. Verifique os dados e tente novamente.');
+    })
+    .finally(() => {
+        // Re-enable button
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+// Auto-save form data on input
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action*="evolution_api"]');
+    if (form) {
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                // Auto-save indicator could be added here
+                console.log('Evolution API settings changed');
+            });
+        });
+    }
+});
 </script>
 {% endblock %}

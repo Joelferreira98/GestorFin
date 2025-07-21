@@ -85,6 +85,62 @@ def update_system_settings():
     flash('Configurações do sistema atualizadas!', 'success')
     return redirect(url_for('admin.index'))
 
+@admin_bp.route('/evolution_api', methods=['POST'])
+@admin_required
+def update_evolution_api():
+    settings = SystemSettings.query.first()
+    
+    if not settings:
+        settings = SystemSettings()
+        db.session.add(settings)
+    
+    settings.evolution_api_url = request.form.get('evolution_api_url')
+    settings.evolution_api_key = request.form.get('evolution_api_key')
+    settings.evolution_default_instance = request.form.get('evolution_default_instance')
+    settings.evolution_webhook_url = request.form.get('evolution_webhook_url')
+    settings.evolution_enabled = 'evolution_enabled' in request.form
+    
+    db.session.commit()
+    
+    flash('Configurações da Evolution API atualizadas!', 'success')
+    return redirect(url_for('admin.index'))
+
+@admin_bp.route('/evolution_api/test', methods=['POST'])
+@admin_required
+def test_evolution_api():
+    import requests
+    import json
+    
+    settings = SystemSettings.query.first()
+    
+    if not settings or not settings.evolution_api_url or not settings.evolution_api_key:
+        flash('Configure primeiro a URL e chave da Evolution API!', 'error')
+        return redirect(url_for('admin.index'))
+    
+    try:
+        # Test connection to Evolution API
+        headers = {
+            'apikey': settings.evolution_api_key,
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.get(
+            f"{settings.evolution_api_url}/instance/fetchInstances",
+            headers=headers,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            instances = response.json()
+            flash(f'Conexão com Evolution API bem-sucedida! {len(instances)} instância(s) encontrada(s).', 'success')
+        else:
+            flash(f'Erro na conexão: {response.status_code} - {response.text}', 'error')
+            
+    except requests.exceptions.RequestException as e:
+        flash(f'Erro de conexão com Evolution API: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.index'))
+
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @admin_required
 def delete_user(user_id):

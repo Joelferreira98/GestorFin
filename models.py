@@ -186,4 +186,12 @@ class SystemSettings(db.Model):
     primary_color = db.Column(db.String(7), default='#007bff')
     secondary_color = db.Column(db.String(7), default='#6c757d')
     description = db.Column(db.Text)
+    
+    # Evolution API Settings
+    evolution_api_url = db.Column(db.String(200))
+    evolution_api_key = db.Column(db.String(100))
+    evolution_default_instance = db.Column(db.String(100))
+    evolution_webhook_url = db.Column(db.String(200))
+    evolution_enabled = db.Column(db.Boolean, default=False)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
