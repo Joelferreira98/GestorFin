@@ -181,7 +181,7 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    {% if receivable.status == 'pending' %}
+                                    {% if receivable.status in ['pending', 'overdue'] %}
                                     <form method="POST" action="/receivables/mark_paid/{{ receivable.id }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-success" title="Marcar como Pago" onclick="return confirm('Confirma o pagamento desta conta?')">
                                             <i class="fas fa-check"></i>

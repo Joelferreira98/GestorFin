@@ -44,6 +44,15 @@ def index():
     ).order_by(Receivable.due_date.asc())
     
     receivables = receivables_query.all()
+    
+    # Update overdue status for pending receivables
+    today = date.today()
+    for receivable, client in receivables:
+        if receivable.status == 'pending' and receivable.due_date < today:
+            receivable.status = 'overdue'
+    
+    db.session.commit()
+    
     clients = Client.query.filter_by(user_id=user.id).all()
     
     # Generate month options for the filter
@@ -126,7 +135,7 @@ Lembramos que você possui uma conta a vencer:
 Obrigado!"""
     
     # Enviar mensagem via WhatsApp
-    success = send_whatsapp_message(client.whatsapp, message)
+    success = send_whatsapp_message(user.id, client.whatsapp, message)
     
     if success:
         flash(f'Cobrança enviada via WhatsApp para {client.name}!', 'success')
