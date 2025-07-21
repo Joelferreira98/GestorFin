@@ -2,7 +2,7 @@ import os
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from app import app
 from models import User
-from utils import calculate_dashboard_stats
+# from utils import calculate_dashboard_stats
 
 # Import API blueprints
 from api.auth import auth_bp
