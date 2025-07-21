@@ -1,0 +1,251 @@
+# 🚀 PROMPT COMPLETO PARA SISTEMA FINANCEIRO AVANÇADO
+
+## 📋 PROMPT PARA COPIAR E COLAR NO REPLIT AI:
+
+```
+Crie um sistema AVANÇADO de gestão financeira em Python Flask com TODAS estas funcionalidades:
+
+**🎯 FUNCIONALIDADES PRINCIPAIS:**
+1. Dashboard com estatísticas em tempo real e gráficos
+2. Gestão completa de clientes (CRUD + CPF/CNPJ + WhatsApp)
+3. Contas a receber com parcelas e status avançado
+4. Contas a pagar com fornecedores e vencimentos
+5. Sistema de vendas parceladas com confirmação digital
+6. Integração WhatsApp com Evolution API
+7. Lembretes automáticos personalizáveis
+8. Sistema de planos com limites por usuário
+9. Painel administrativo completo
+10. PWA com instalação e offline
+
+**🛠️ STACK TECNOLÓGICO COMPLETO:**
+- Backend: Python Flask + SQLAlchemy + PostgreSQL/SQLite
+- Frontend: HTML5 + Bootstrap 5 + JavaScript + PWA
+- Autenticação: Flask Sessions multi-usuário
+- APIs Externas: Evolution API para WhatsApp
+- Banco: PostgreSQL com migration automática
+
+**📊 ESTRUTURA DE DADOS COMPLEXA:**
+```
+users: id, username, email, password, isAdmin, phone, createdAt
+clients: id, userId, name, whatsapp, document(CPF/CNPJ), email, address, zipCode, city, state
+receivables: id, userId, clientId, description, amount, dueDate, status, type, installmentNumber, totalInstallments, parentId
+payables: id, userId, supplierId, description, amount, dueDate, status, category
+installment_sales: id, userId, clientId, totalAmount, installments, description, status, confirmationToken, documentPhoto, approvalNotes
+whatsapp_messages: id, userId, clientId, messageType, content, status, templateType, sentAt
+payment_reminders: id, userId, name, message, time, isActive, days, reminderType
+user_plans: id, userId, planName, maxClients, maxReceivables, maxPayables, isActive, expiresAt
+user_whatsapp_instances: id, userId, instanceName, phoneNumber, status, qrCode
+system_settings: id, systemName, logoUrl, faviconUrl, primaryColor, secondaryColor, description
+```
+
+**🔧 FUNCIONALIDADES AVANÇADAS OBRIGATÓRIAS:**
+
+1. **Sistema Multi-Usuário:**
+   - Registro e login de usuários
+   - Isolamento de dados por usuário
+   - Permissões admin vs usuário comum
+
+2. **Vendas Parceladas com Confirmação Digital:**
+   - Criar venda parcelada com link único
+   - Cliente acessa link público e confirma venda
+   - Upload de foto do documento como assinatura
+   - Admin aprova/rejeita com notas
+   - Geração automática de parcelas em contas a receber
+
+3. **Integração WhatsApp Evolution API:**
+   - Configuração de instâncias por usuário
+   - Envio automático de link de confirmação
+   - Notificações de aprovação/rejeição
+   - Lembretes de vencimento automáticos
+   - QR Code para conexão WhatsApp
+
+4. **Sistema de Lembretes Inteligente:**
+   - Lembretes personalizáveis por horário
+   - Diferentes tipos: vencimento, cobrança, follow-up
+   - Templates de mensagem customizáveis
+   - Processamento automático em background
+
+5. **Sistema de Planos e Limites:**
+   - Planos: Básico, Premium, Enterprise
+   - Limites por plano: max clientes, contas, funcionalidades
+   - Cobrança automática mensal
+   - Upgrade/downgrade de planos
+
+6. **Painel Administrativo:**
+   - Gerenciar usuários e planos
+   - Configurações globais do sistema
+   - Logs de atividade
+   - Estatísticas gerais
+   - Configuração Evolution API global
+
+7. **PWA e Personalização:**
+   - Progressive Web App instalável
+   - Personalização: logo, cores, nome do sistema
+   - Favicon dinâmico
+   - Modo offline básico
+
+**📱 APIs REST COMPLETAS:**
+```
+# Autenticação
+POST /api/register
+POST /api/login
+POST /api/logout
+GET /api/user
+
+# Dashboard
+GET /api/dashboard
+GET /api/status
+
+# CRUD Entities
+GET|POST /api/clients
+GET|PUT|DELETE /api/clients/:id
+
+GET|POST /api/receivables
+GET|PUT|DELETE /api/receivables/:id
+
+GET|POST /api/payables
+GET|PUT|DELETE /api/payables/:id
+
+# Vendas Parceladas
+GET|POST /api/installment-sales
+GET|PUT|DELETE /api/installment-sales/:id
+POST /api/installment-sales/:id/approve
+POST /api/installment-sales/:id/reject
+POST /api/installment-sales/:id/regenerate-token
+
+# WhatsApp
+GET|POST /api/whatsapp/instances
+DELETE /api/whatsapp/instances/:id
+POST /api/whatsapp/send-message
+GET /api/whatsapp/messages
+
+# Lembretes
+GET|POST /api/reminders
+GET|PUT|DELETE /api/reminders/:id
+
+# Admin
+GET /api/admin/users
+GET|PUT /api/admin/users/:id
+GET|POST /api/admin/system-settings
+
+# Planos
+GET /api/plans
+POST /api/plans/upgrade
+GET /api/plan-limits
+```
+
+**🎨 INTERFACE MODERNA OBRIGATÓRIA:**
+- Design responsivo mobile-first
+- Cards com gradientes e sombras
+- Tabelas com filtros e paginação
+- Modais para CRUD operations
+- Notificações toast elegantes
+- Loading states e skeleton screens
+- Tema escuro/claro opcional
+
+**⚡ DADOS PRÉ-CARREGADOS REALISTAS:**
+- Admin: joel / 123456
+- 3 usuários exemplo com planos diferentes
+- 8 clientes com dados completos (CPF, WhatsApp, endereço)
+- 12 contas a receber (simples e parceladas)
+- 6 contas a pagar com fornecedores
+- 2 vendas parceladas em diferentes status
+- Lembretes configurados
+- Instâncias WhatsApp exemplo
+
+**🔒 SEGURANÇA E VALIDAÇÃO:**
+- Hash de senhas com bcrypt
+- Validação de CPF/CNPJ
+- Sanitização de inputs
+- Rate limiting em APIs
+- CSRF protection
+- Session timeout
+
+**📦 DEPLOYMENT READY:**
+- requirements.txt completo
+- Dockerfile opcional
+- Environment variables
+- Database migrations
+- Health checks
+- Error handling robusto
+
+**🚀 ESTRUTURA DE ARQUIVOS OBRIGATÓRIA:**
+```
+app.py                    # Main Flask app
+models.py                 # SQLAlchemy models
+api/                      # API blueprints
+  __init__.py
+  auth.py                 # Authentication routes
+  clients.py              # Client CRUD
+  receivables.py          # Receivables CRUD
+  payables.py             # Payables CRUD
+  installment_sales.py    # Sales management
+  whatsapp.py             # WhatsApp integration
+  admin.py                # Admin panel
+templates/                # Jinja2 templates
+  base.html              # Base template
+  auth/                  # Auth pages
+  dashboard.html         # Main dashboard
+  clients.html           # Client management
+  receivables.html       # Receivables
+  payables.html          # Payables
+  installment_sales.html # Sales management
+  whatsapp.html          # WhatsApp config
+  admin.html             # Admin panel
+static/                  # Static files
+  css/
+  js/
+  images/
+requirements.txt         # Dependencies
+```
+
+**🔧 CONFIGURAÇÕES EVOLUTION API:**
+- Endpoint: POST https://api.evolutionapi.com/instance/create
+- Headers: {'apikey': 'YOUR_API_KEY', 'Content-Type': 'application/json'}
+- Body: {'instanceName': 'instance_name', 'number': 'phone_number'}
+- WebSocket para QR Code e status
+- Envio de mensagem: POST /message/sendText
+
+**⚙️ ENVIRONMENT VARIABLES:**
+```
+DATABASE_URL=sqlite:///financeiro.db
+FLASK_SECRET_KEY=your_secret_key_here
+EVOLUTION_API_URL=https://api.evolutionapi.com
+EVOLUTION_API_KEY=your_evolution_api_key
+FLASK_ENV=development
+```
+
+**🎯 RESULTADO FINAL ESPERADO:**
+Um sistema completo que rivaliza com soluções comerciais como:
+- ContaAzul
+- Granatum
+- Organizze
+- Mobills
+
+Com TODAS as funcionalidades avançadas implementadas e funcionando perfeitamente.
+
+Implemente um sistema PROFISSIONAL e COMPLETO, não um MVP básico. Use SQLAlchemy models, Blueprints para organização, e templates Jinja2. Sistema deve ter a qualidade de um SaaS comercial pronto para produção.
+```
+
+## 🎯 INSTRUÇÕES DE USO:
+
+## 🎯 INSTRUÇÕES DE USO:
+
+1. **Acesse Replit.com**
+2. **Clique em "Create Repl"**
+3. **Selecione "Python"**
+4. **Cole o prompt acima no chat do Replit AI**
+5. **Aguarde a criação automática**
+6. **Execute com "python app.py"**
+
+## ✅ RESULTADO GARANTIDO:
+
+- Sistema financeiro completo em arquivo único
+- Interface moderna com Bootstrap 5
+- Todas as funcionalidades implementadas
+- Login: joel / 123456
+- Dados de exemplo pré-carregados
+- Zero configuração necessária
+- Funcionamento imediato
+
+Este novo sistema será totalmente independente e funcionará perfeitamente desde o primeiro momento!
