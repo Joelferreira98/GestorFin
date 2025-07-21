@@ -4,29 +4,7 @@ from app import app
 from models import User
 # from utils import calculate_dashboard_stats
 
-# Import API blueprints
-from api.auth import auth_bp
-from api.clients import clients_bp
-from api.receivables import receivables_bp
-from api.payables import payables_bp
-from api.installment_sales import installment_sales_bp
-from api.accounts import accounts_bp
-from api.whatsapp import whatsapp_bp
-from api.reminders import reminders_bp
-from api.admin import admin_bp
-from api.dashboard import dashboard_bp
-
-# Register blueprints
-app.register_blueprint(auth_bp, url_prefix='/api')
-app.register_blueprint(clients_bp, url_prefix='/api')
-app.register_blueprint(receivables_bp, url_prefix='/api')
-app.register_blueprint(payables_bp, url_prefix='/api')
-app.register_blueprint(installment_sales_bp, url_prefix='/api')
-app.register_blueprint(accounts_bp, url_prefix='/api')
-app.register_blueprint(whatsapp_bp, url_prefix='/api')
-app.register_blueprint(reminders_bp, url_prefix='/api')
-app.register_blueprint(admin_bp, url_prefix='/api')
-app.register_blueprint(dashboard_bp, url_prefix='/api')
+# Blueprints are registered in app.py to avoid conflicts
 
 def login_required(f):
     """Decorator to require login for routes"""
