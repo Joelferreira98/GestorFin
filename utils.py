@@ -141,9 +141,7 @@ def send_whatsapp_message(user_id, phone, message):
             },
             json={
                 'number': formatted_phone,
-                'textMessage': {
-                    'text': message
-                }
+                'text': message
             },
             timeout=10
         )
