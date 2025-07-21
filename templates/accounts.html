@@ -9,7 +9,7 @@
         </h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ url_for('auth.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Cadastrar Contas</li>
             </ol>
         </nav>
@@ -94,7 +94,7 @@
                             </table>
                         </div>
                         <div class="text-center">
-                            <a href="{{ url_for('receivables.index') }}" class="btn btn-sm btn-outline-primary">
+                            <a href="/receivables/" class="btn btn-sm btn-outline-primary">
                                 Ver todas <i class="fas fa-arrow-right"></i>
                             </a>
                         </div>
@@ -135,7 +135,7 @@
                             </table>
                         </div>
                         <div class="text-center">
-                            <a href="{{ url_for('payables.index') }}" class="btn btn-sm btn-outline-warning">
+                            <a href="/payables/" class="btn btn-sm btn-outline-warning">
                                 Ver todas <i class="fas fa-arrow-right"></i>
                             </a>
                         </div>
