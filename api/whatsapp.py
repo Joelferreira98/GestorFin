@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app import db
-from models import UserWhatsAppInstance, WhatsAppMessage, PaymentReminder, Client
+from models import UserWhatsAppInstance, WhatsAppMessage, PaymentReminder, Client, SystemSettings
 from utils import login_required, get_current_user, send_whatsapp_message
 import requests
 import os
+import logging
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
@@ -16,8 +17,9 @@ def index():
         WhatsAppMessage.user_id == user.id
     ).order_by(WhatsAppMessage.created_at.desc()).limit(50).all()
     reminders = PaymentReminder.query.filter_by(user_id=user.id).all()
+    clients = Client.query.filter_by(user_id=user.id).filter(Client.whatsapp.isnot(None)).all()
     
-    return render_template('whatsapp.html', instances=instances, messages=messages, reminders=reminders)
+    return render_template('whatsapp.html', instances=instances, messages=messages, reminders=reminders, clients=clients)
 
 @whatsapp_bp.route('/instances/add', methods=['POST'])
 @login_required
@@ -27,24 +29,58 @@ def add_instance():
     instance_name = request.form.get('instance_name')
     phone_number = request.form.get('phone_number')
     
-    # Create instance via Evolution API
-    api_url = os.environ.get('EVOLUTION_API_URL', 'https://api.evolutionapi.com')
-    api_key = os.environ.get('EVOLUTION_API_KEY', 'default_key')
+    # Get Evolution API settings from admin panel
+    system_settings = SystemSettings.query.first()
+    
+    if not system_settings or not system_settings.evolution_enabled:
+        flash('Integração Evolution API não está configurada ou ativada!', 'error')
+        return redirect(url_for('whatsapp.index'))
+    
+    if not system_settings.evolution_api_url or not system_settings.evolution_api_key:
+        flash('URL da API e chave de acesso devem ser configurados no painel administrativo!', 'error')
+        return redirect(url_for('whatsapp.index'))
     
     try:
-        response = requests.post(
-            f"{api_url}/instance/create",
+        # First, check if the instance already exists
+        check_response = requests.get(
+            f"{system_settings.evolution_api_url.rstrip('/')}/instance/fetchInstances",
             headers={
-                'apikey': api_key,
+                'apikey': system_settings.evolution_api_key,
+                'Content-Type': 'application/json'
+            },
+            timeout=10
+        )
+        
+        logging.debug(f"Check instances response: {check_response.status_code} - {check_response.text}")
+        
+        if check_response.status_code == 401:
+            flash('Chave da API inválida! Verifique as configurações no painel administrativo.', 'error')
+            return redirect(url_for('whatsapp.index'))
+        elif check_response.status_code != 200:
+            flash(f'Erro ao conectar com a Evolution API: {check_response.status_code}', 'error')
+            return redirect(url_for('whatsapp.index'))
+        
+        # Create the instance
+        create_response = requests.post(
+            f"{system_settings.evolution_api_url.rstrip('/')}/instance/create",
+            headers={
+                'apikey': system_settings.evolution_api_key,
                 'Content-Type': 'application/json'
             },
             json={
                 'instanceName': instance_name,
-                'number': phone_number
-            }
+                'token': system_settings.evolution_api_key,
+                'qrcode': True,
+                'integration': 'WHATSAPP-BAILEYS'
+            },
+            timeout=30
         )
         
-        if response.status_code == 200:
+        logging.debug(f"Create instance response: {create_response.status_code} - {create_response.text}")
+        
+        if create_response.status_code in [200, 201]:
+            result = create_response.json()
+            
             instance = UserWhatsAppInstance(
                 user_id=user.id,
                 instance_name=instance_name,
@@ -55,14 +91,62 @@ def add_instance():
             db.session.add(instance)
             db.session.commit()
             
-            flash('Instância criada com sucesso!', 'success')
+            flash('Instância criada com sucesso! Use o QR Code para conectar seu WhatsApp.', 'success')
         else:
-            flash('Erro ao criar instância na Evolution API!', 'error')
+            error_msg = create_response.text
+            try:
+                error_data = create_response.json()
+                if 'message' in error_data:
+                    error_msg = error_data['message']
+            except:
+                pass
+            flash(f'Erro ao criar instância: {error_msg}', 'error')
     
+    except requests.exceptions.Timeout:
+        flash('Tempo limite esgotado. Verifique se a URL da API está correta.', 'error')
+    except requests.exceptions.ConnectionError:
+        flash('Erro de conexão. Verifique se a URL da API está correta e acessível.', 'error')
     except Exception as e:
-        flash(f'Erro de conexão: {str(e)}', 'error')
+        logging.error(f"Error creating instance: {str(e)}")
+        flash(f'Erro inesperado: {str(e)}', 'error')
     
     return redirect(url_for('whatsapp.index'))
+
+@whatsapp_bp.route('/instances/qrcode/<instance_name>')
+@login_required
+def get_qrcode(instance_name):
+    """Get QR Code for WhatsApp instance connection"""
+    user = get_current_user()
+    
+    # Check if user owns this instance
+    instance = UserWhatsAppInstance.query.filter_by(
+        instance_name=instance_name, 
+        user_id=user.id
+    ).first_or_404()
+    
+    # Get Evolution API settings
+    system_settings = SystemSettings.query.first()
+    
+    if not system_settings or not system_settings.evolution_enabled:
+        return jsonify({'error': 'Evolution API não configurada'}), 400
+    
+    try:
+        response = requests.get(
+            f"{system_settings.evolution_api_url.rstrip('/')}/instance/connect/{instance_name}",
+            headers={
+                'apikey': system_settings.evolution_api_key,
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return jsonify(response.json())
+        else:
+            return jsonify({'error': 'Erro ao obter QR Code'}), response.status_code
+    
+    except Exception as e:
+        logging.error(f"Error getting QR code: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @whatsapp_bp.route('/instances/delete/<int:instance_id>', methods=['POST'])
 @login_required

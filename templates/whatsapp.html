@@ -140,6 +140,11 @@
                                     </td>
                                     <td>{{ instance.created_at.strftime('%d/%m/%Y') }}</td>
                                     <td>
+                                        {% if instance.status == 'connecting' %}
+                                        <button class="btn btn-sm btn-info me-1" onclick="showQRCode('{{ instance.instance_name }}')">
+                                            <i class="fas fa-qrcode"></i> QR Code
+                                        </button>
+                                        {% endif %}
                                         <form method="POST" action="{{ url_for('whatsapp.delete_instance', instance_id=instance.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta instância?')">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                                 <i class="fas fa-trash"></i>
@@ -444,6 +449,35 @@
         </div>
     </div>
 </div>
+
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-qrcode me-2"></i>Conectar WhatsApp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="qrCodeContainer" class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <br>Carregando QR Code...
+                </div>
+                <div class="mt-3">
+                    <h6>Instruções:</h6>
+                    <ol class="small">
+                        <li>Abra o WhatsApp no seu celular</li>
+                        <li>Toque em Menu (⋮) > WhatsApp Web</li>
+                        <li>Aponte seu celular para esta tela para capturar o código</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -485,5 +519,47 @@ document.getElementById('reminder_type').addEventListener('change', function() {
         messageTextarea.value = template;
     }
 });
+
+// QR Code functionality
+function showQRCode(instanceName) {
+    // Show loading modal
+    const qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+    qrModal.show();
+    
+    // Clear previous content
+    document.getElementById('qrCodeContainer').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-3x"></i><br>Obtendo QR Code...</div>';
+    
+    // Fetch QR Code
+    fetch(`/whatsapp/instances/qrcode/${instanceName}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('qrCodeContainer').innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            } else if (data.qrcode) {
+                document.getElementById('qrCodeContainer').innerHTML = `
+                    <div class="text-center">
+                        <img src="data:image/png;base64,${data.qrcode}" class="img-fluid" style="max-width: 300px;">
+                        <p class="mt-3 text-muted">Escaneie este QR Code com seu WhatsApp</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('qrCodeContainer').innerHTML = '<div class="alert alert-info">QR Code não disponível. Instância pode já estar conectada.</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('qrCodeContainer').innerHTML = `<div class="alert alert-danger">Erro ao obter QR Code: ${error.message}</div>`;
+        });
+}
+
+// Auto refresh instances status every 10 seconds
+setInterval(() => {
+    const instances = document.querySelectorAll('[data-instance-status]');
+    instances.forEach(instance => {
+        const instanceName = instance.dataset.instanceName;
+        if (instanceName) {
+            // You could implement status checking here
+        }
+    });
+}, 10000);
 </script>
 {% endblock %}
