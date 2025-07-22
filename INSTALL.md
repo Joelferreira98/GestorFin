@@ -72,9 +72,6 @@ O script irá solicitar:
    - Email do admin
    - Senha (mínimo 8 caracteres)
 
-4. **SSL (Opcional)**
-   - Configuração automática do Let's Encrypt
-
 ### 2. Servidor com MySQL Existente
 
 #### Quando Usar
@@ -105,16 +102,15 @@ export MYSQL_PORT=3307
 ./install.sh
 ```
 
-### Configurar SSL Personalizado
-Para usar certificado próprio:
+### Configurar Domínio Personalizado
+Para usar domínio específico:
 
 ```bash
-# Após instalação
-sudo cp seu-certificado.crt /etc/ssl/certs/
-sudo cp sua-chave.key /etc/ssl/private/
-
 # Editar configuração do Nginx
 sudo nano /etc/nginx/sites-available/financeiro-max
+# Alterar "default_server" por "server_name seudominio.com;"
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
 ### Configurar Proxy Reverso
@@ -234,16 +230,17 @@ sudo nano /opt/financeiro-max/.env
 sudo systemctl restart financeiro-max
 ```
 
-### SSL não funciona
+### Configurar SSL (manual)
 ```bash
-# Verificar certificados
-sudo certbot certificates
+# Instalar Certbot se necessário
+sudo apt install certbot python3-certbot-nginx
 
-# Renovar manualmente
-sudo certbot renew --dry-run
+# Configurar SSL para seu domínio
+sudo certbot --nginx -d seudominio.com
 
-# Verificar configuração Nginx
+# Verificar configuração
 sudo nginx -t
+sudo systemctl reload nginx
 ```
 
 ## Manutenção e Updates

@@ -89,10 +89,8 @@ chmod +x *.sh
 #### Configuração Interativa:
 - **Usuário do sistema**: Nome do usuário Linux
 - **Porta da aplicação**: Porta interna (padrão: 5000)
-- **Domínio/IP**: Endereço público do servidor
 - **Credenciais MySQL**: Senha root e dados do banco
 - **Administrador**: Email e senha do primeiro usuário admin
-- **SSL**: Certificado gratuito via Let's Encrypt (opcional)
 
 ### Instalação Manual
 

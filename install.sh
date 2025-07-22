@@ -72,11 +72,6 @@ APP_USER=${APP_USER:-financeiro}
 read -p "Digite a porta da aplicação (padrão: 5000): " APP_PORT
 APP_PORT=${APP_PORT:-5000}
 
-read -p "Digite o domínio/IP do servidor (ex: meusite.com): " DOMAIN
-if [[ -z "$DOMAIN" ]]; then
-    error "Domínio é obrigatório!"
-fi
-
 read -p "Digite a senha do banco MySQL (será criada): " -s DB_PASSWORD
 echo
 if [[ -z "$DB_PASSWORD" ]]; then
@@ -94,7 +89,6 @@ SERVICE_DIR="/etc/systemd/system"
 log "Configurações:"
 info "Usuário: $APP_USER"
 info "Porta: $APP_PORT"
-info "Domínio: $DOMAIN"
 info "Banco: $DB_NAME"
 info "Diretório: $APP_DIR"
 
@@ -134,8 +128,6 @@ PACKAGES=(
     libmysqlclient-dev
     pkg-config
     ufw
-    certbot
-    python3-certbot-nginx
 )
 
 # Adicionar MySQL apenas se não estiver instalado
@@ -272,7 +264,7 @@ DATABASE_URL=mysql+pymysql://$DB_USER:$DB_PASSWORD@localhost/$DB_NAME
 # Server Configuration
 HOST=0.0.0.0
 PORT=$APP_PORT
-DOMAIN=$DOMAIN
+DOMAIN=localhost
 
 # MySQL Connection Pool
 SQLALCHEMY_ENGINE_OPTIONS_POOL_SIZE=20
@@ -386,8 +378,8 @@ EOF
 log "Configurando Nginx..."
 sudo tee /etc/nginx/sites-available/financeiro-max > /dev/null << EOF
 server {
-    listen 80;
-    server_name $DOMAIN;
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -567,16 +559,7 @@ else
     error "Falha ao iniciar o Nginx"
 fi
 
-# Configurar SSL (opcional)
-echo
-read -p "Deseja configurar SSL com Let's Encrypt? (y/N): " SSL_CONFIRM
-if [[ "$SSL_CONFIRM" == "y" || "$SSL_CONFIRM" == "Y" ]]; then
-    log "Configurando SSL..."
-    sudo certbot --nginx -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN
-    
-    # Renovação automática
-    (sudo crontab -l 2>/dev/null; echo "0 12 * * * /usr/bin/certbot renew --quiet") | sudo crontab -
-fi
+# SSL removido - configuração simplificada para qualquer IP/domínio
 
 # Criar script de backup
 log "Criando script de backup..."
@@ -634,7 +617,8 @@ echo "=== INSTALAÇÃO CONCLUÍDA ==="
 log "✓ FinanceiroMax instalado com sucesso!"
 echo
 info "📋 INFORMAÇÕES DO SISTEMA:"
-info "URL: http://$DOMAIN"
+SERVER_IP=$(hostname -I | awk '{print $1}')
+info "URL: http://$SERVER_IP:$APP_PORT"
 info "Porta interna: $APP_PORT"
 info "Usuário admin: $ADMIN_EMAIL"
 info "Diretório: $APP_DIR"
@@ -652,12 +636,8 @@ info "2. Configure backup remoto se necessário"
 info "3. Monitore os logs regularmente"
 echo
 
-if [[ "$SSL_CONFIRM" == "y" || "$SSL_CONFIRM" == "Y" ]]; then
-    log "✓ Acesse: https://$DOMAIN"
-else
-    log "✓ Acesse: http://$DOMAIN"
-    warning "Recomendamos configurar SSL para produção!"
-fi
+log "✓ Acesse: http://$SERVER_IP:$APP_PORT"
+info "Para usar com domínio personalizado, configure o Nginx manualmente."
 
 echo
 log "Instalação finalizada! 🚀"

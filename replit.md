@@ -140,7 +140,8 @@ Preferred communication style: Simple, everyday language.
   - Arquivo `requirements.production.txt` com dependências fixas para produção
   - Sistema de fallback automático para criação de requirements.txt
   - Validação completa de credenciais e tratamento robusto de erros
-  - Configuração automática do Nginx com SSL/HTTPS via Let's Encrypt
+  - **Configuração Simplificada**: Removidas opções de certificado SSL e domínio específico
+  - Configuração automática do Nginx para qualquer IP/domínio (default_server)
   - Sistema de logs estruturado com rotação automática e monitoramento
 - **Sistema de IA Financeira Implementado**: Integração completa com OpenAI para análises preditivas
   - Configuração via painel administrativo (não variáveis de ambiente)

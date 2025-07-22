@@ -48,10 +48,7 @@ APP_USER=${APP_USER:-financeiro}
 read -p "Porta da aplicação (padrão: 5000): " APP_PORT
 APP_PORT=${APP_PORT:-5000}
 
-read -p "Domínio/IP do servidor: " DOMAIN
-if [[ -z "$DOMAIN" ]]; then
-    error "Domínio é obrigatório!"
-fi
+# Configurar para usar qualquer IP/domínio
 
 # Configuração do banco
 echo
@@ -167,7 +164,7 @@ SESSION_SECRET=$(openssl rand -hex 32)
 DATABASE_URL=mysql+pymysql://$DB_USER:$DB_PASSWORD@localhost/$DB_NAME
 HOST=0.0.0.0
 PORT=$APP_PORT
-DOMAIN=$DOMAIN
+DOMAIN=localhost
 LOG_LEVEL=INFO
 EOF
 
@@ -249,8 +246,8 @@ EOF
 # Configurar Nginx
 sudo tee /etc/nginx/sites-available/financeiro-max > /dev/null << EOF
 server {
-    listen 80;
-    server_name $DOMAIN;
+    listen 80 default_server;
+    listen [::]:80 default_server;
 
     location /static/ {
         alias $APP_DIR/static/;
@@ -286,7 +283,8 @@ sleep 3
 
 if sudo systemctl is-active --quiet financeiro-max; then
     log "✓ Instalação concluída!"
-    log "✓ Acesse: http://$DOMAIN"
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    log "✓ Acesse: http://$SERVER_IP:$APP_PORT"
     log "✓ Admin: $ADMIN_EMAIL"
 else
     error "Falha na inicialização!"
