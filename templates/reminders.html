@@ -261,17 +261,13 @@
 <script>
 function testReminders() {
     if (confirm('Deseja executar um teste do sistema de lembretes?')) {
-        fetch('/reminders/test', {
-            method: 'POST',
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert('Teste executado! Verifique os logs do sistema.');
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao executar teste.');
-        });
+        // Criar formulário temporário para enviar POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/reminders/test';
+        form.style.display = 'none';
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 
