@@ -10,11 +10,25 @@ ai_insights_bp = Blueprint('ai_insights', __name__)
 
 def check_premium_plan():
     """Verificar se o usuário tem plano Premium"""
-    from flask import session
-    user_plan = session.get('user_plan_name', 'Free')
-    if user_plan != 'Premium':
+    from models import UserPlan
+    from datetime import datetime
+    
+    user = get_current_user()
+    if not user:
+        flash('Usuário não autenticado!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    user_plan = UserPlan.query.filter_by(user_id=user.id).first()
+    
+    if not user_plan or user_plan.plan_name != 'Premium':
         flash('IA Insights disponível apenas no plano Premium! Faça upgrade para acessar.', 'warning')
         return redirect(url_for('plans.index'))
+    
+    # Verificar se o plano Premium não expirou
+    if user_plan.expires_at and user_plan.expires_at < datetime.utcnow():
+        flash('Seu plano Premium expirou! Renove para continuar acessando.', 'warning')
+        return redirect(url_for('plans.index'))
+    
     return None
 
 @ai_insights_bp.route('/')

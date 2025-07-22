@@ -1,9 +1,11 @@
 from flask import session, redirect, url_for, flash
 from functools import wraps
-from models import User
+from models import User, UserPlan
 import re
 import requests
 import os
+import logging
+from datetime import datetime
 
 def login_required(f):
     @wraps(f)
@@ -33,6 +35,24 @@ def get_current_user():
     if 'user_id' in session:
         return User.query.get(session['user_id'])
     return None
+
+def get_user_plan_name(user_id):
+    """Buscar plano atual do usuário no banco de dados"""
+    user_plan = UserPlan.query.filter_by(user_id=user_id).first()
+    
+    if not user_plan:
+        return 'Free'
+    
+    # Verificar se o plano Premium expirou
+    if user_plan.plan_name == 'Premium' and user_plan.expires_at:
+        if user_plan.expires_at < datetime.utcnow():
+            return 'Free'  # Plano expirou, retornar para Free
+    
+    return user_plan.plan_name
+
+def has_premium_access(user_id):
+    """Verificar se usuário tem acesso Premium válido"""
+    return get_user_plan_name(user_id) == 'Premium'
 
 def validate_cpf(cpf):
     """Validate Brazilian CPF"""

@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime
-from flask import Flask
+from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -47,6 +47,22 @@ with app.app_context():
     # Create sample data if not exists
     from sample_data import create_sample_data
     create_sample_data()
+
+# Template context processors
+@app.context_processor
+def inject_user_plan():
+    """Inject user plan information into all templates"""
+    if 'user_id' in session:
+        from utils import get_user_plan_name, has_premium_access
+        user_id = session['user_id']
+        return {
+            'current_user_plan': get_user_plan_name(user_id),
+            'has_premium_access': has_premium_access(user_id)
+        }
+    return {
+        'current_user_plan': 'Free',
+        'has_premium_access': False
+    }
 
 # Register blueprints
 from api.auth import auth_bp
