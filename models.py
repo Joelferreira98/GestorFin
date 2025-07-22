@@ -12,6 +12,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     phone = db.Column(db.String(20))
+    phone_confirmed = db.Column(db.Boolean, default=False)  # WhatsApp confirmado
     profile_photo = db.Column(db.String(200))  # Caminho para foto de perfil
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -24,6 +25,7 @@ class User(db.Model):
     payment_reminders = db.relationship('PaymentReminder', backref='user', lazy=True, cascade='all, delete-orphan')
     user_plan = db.relationship('UserPlan', backref='user', uselist=False, cascade='all, delete-orphan')
     whatsapp_instances = db.relationship('UserWhatsAppInstance', backref='user', lazy=True, cascade='all, delete-orphan')
+    confirmation_tokens = db.relationship('PhoneConfirmationToken', backref='user', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -230,3 +232,25 @@ class SystemSettings(db.Model):
     prediction_months = db.Column(db.Integer, default=3)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PhoneConfirmationToken(db.Model):
+    """Token para confirmação de número de WhatsApp"""
+    __tablename__ = 'phone_confirmation_tokens'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    token = db.Column(db.String(6), nullable=False)  # Código de 6 dígitos
+    phone = db.Column(db.String(20), nullable=False)
+    is_used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    
+    @staticmethod
+    def generate_token():
+        """Gerar código de confirmação de 6 dígitos"""
+        import random
+        return str(random.randint(100000, 999999))
+    
+    def is_expired(self):
+        """Verificar se o token expirou"""
+        return datetime.utcnow() > self.expires_at

@@ -162,3 +162,67 @@ def send_whatsapp_message(user_id, phone, message):
     except Exception as e:
         logging.error(f"Error sending WhatsApp message: {str(e)}")
         return False
+
+def send_admin_whatsapp_message(phone, message):
+    """Send WhatsApp message from admin instance"""
+    from models import SystemSettings, UserWhatsAppInstance, User
+    import logging
+    import requests
+    
+    try:
+        # Get system settings
+        system_settings = SystemSettings.query.first()
+        if not system_settings or not system_settings.evolution_enabled:
+            logging.warning("Evolution API not configured or disabled")
+            return False
+        
+        # Get first admin's connected WhatsApp instance
+        admin_user = User.query.filter_by(is_admin=True).first()
+        if not admin_user:
+            logging.warning("No admin user found")
+            return False
+            
+        admin_instance = UserWhatsAppInstance.query.filter_by(
+            user_id=admin_user.id, 
+            status='connected'
+        ).first()
+        
+        if not admin_instance:
+            logging.warning(f"No connected WhatsApp instance found for admin")
+            return False
+        
+        # Clean API settings
+        clean_api_key = system_settings.evolution_api_key.strip() if system_settings.evolution_api_key else ''
+        clean_api_url = system_settings.evolution_api_url.rstrip('/') if system_settings.evolution_api_url else ''
+        
+        # Format phone number
+        formatted_phone = format_phone(phone)
+        if not formatted_phone:
+            logging.warning(f"Invalid phone number: {phone}")
+            return False
+        
+        # Send message via Evolution API
+        response = requests.post(
+            f"{clean_api_url}/message/sendText/{admin_instance.instance_name}",
+            headers={
+                'apikey': clean_api_key,
+                'Content-Type': 'application/json'
+            },
+            json={
+                'number': formatted_phone,
+                'text': message
+            },
+            timeout=10
+        )
+        
+        logging.info(f"Admin WhatsApp message response: {response.status_code} - {response.text}")
+        
+        if response.status_code == 400:
+            # Número não existe no WhatsApp
+            logging.warning(f"WhatsApp number not found: {formatted_phone}")
+            return False
+        
+        return response.status_code in [200, 201]
+    except Exception as e:
+        logging.error(f"Error sending admin WhatsApp message: {str(e)}")
+        return False
