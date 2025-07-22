@@ -21,21 +21,21 @@
     </div>
 
     <!-- Status da API -->
-    <div class="alert {% if ai_enabled %}alert-success{% else %}alert-warning{% endif %}" role="alert">
+    <div class="{% if ai_enabled %}alert-success-modern{% else %}alert-warning-modern{% endif %}" role="alert">
         <i class="fas fa-{% if ai_enabled %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
         {% if ai_enabled %}
         <strong>IA Configurada!</strong> A API da OpenAI está conectada e funcionando. Os usuários podem acessar insights avançados.
         {% else %}
-        <strong>IA não configurada!</strong> Configure a OPENAI_API_KEY nas variáveis de ambiente para habilitar funcionalidades de IA.
+        <strong>IA não configurada!</strong> Configure a API key da OpenAI no campo abaixo para habilitar funcionalidades de IA.
         {% endif %}
     </div>
 
     <div class="row">
         <!-- Configurações Principais -->
         <div class="col-lg-8">
-            <div class="card shadow mb-4">
+            <div class="card-modern shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
+                    <h6 class="card-title">
                         <i class="fas fa-cogs me-2"></i>Configurações da IA
                     </h6>
                 </div>

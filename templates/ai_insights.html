@@ -11,11 +11,11 @@
         </h1>
         <div class="d-flex gap-2">
             {% if ai_enabled %}
-            <button type="button" class="btn btn-primary" onclick="generateFullReport()">
+            <button type="button" class="btn-modern btn-primary-modern" onclick="generateFullReport()">
                 <i class="fas fa-file-alt me-1"></i>Relatório Completo
             </button>
             {% else %}
-            <div class="badge bg-warning fs-6 p-2">
+            <div class="badge-warning-modern">
                 <i class="fas fa-exclamation-triangle me-1"></i>IA não configurada
             </div>
             {% endif %}
@@ -24,7 +24,7 @@
 
     {% if not ai_enabled %}
     <!-- Alert quando IA não está configurada -->
-    <div class="alert alert-warning" role="alert">
+    <div class="alert-warning-modern" role="alert">
         <i class="fas fa-exclamation-triangle me-2"></i>
         <strong>IA não configurada!</strong> Solicite ao administrador para configurar a API key da OpenAI no painel administrativo para habilitar os insights avançados.
     </div>
@@ -34,7 +34,7 @@
     <div class="row">
         <!-- Predição de Fluxo de Caixa -->
         <div class="col-xl-12 col-lg-12">
-            <div class="card shadow mb-4">
+            <div class="card-modern shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-chart-line me-2"></i>Predição de Fluxo de Caixa
@@ -61,7 +61,7 @@
 
         <!-- Análise de Risco de Clientes e Insights do Negócio -->
         <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
+            <div class="card-modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>Análise de Risco de Clientes
@@ -80,7 +80,7 @@
         </div>
 
         <div class="col-xl-6 col-lg-6">
-            <div class="card shadow mb-4">
+            <div class="card-modern shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-success">
                         <i class="fas fa-lightbulb me-2"></i>Insights do Negócio

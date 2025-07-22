@@ -14,64 +14,56 @@
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-gradient-primary text-white shadow">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-uppercase mb-1">Total Clientes</div>
-                            <div class="h5 mb-0 font-weight-bold">{{ total_clients }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x opacity-75"></i>
-                        </div>
+            <div class="dashboard-stat-card" style="border-left-color: var(--secondary-color)">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="dashboard-stat-label">Total Clientes</div>
+                        <div class="dashboard-stat-value">{{ total_clients }}</div>
+                    </div>
+                    <div class="text-secondary">
+                        <i class="fas fa-users fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-gradient-success text-white shadow">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-uppercase mb-1">A Receber</div>
-                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(receivables_total) }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-arrow-up fa-2x opacity-75"></i>
-                        </div>
+            <div class="dashboard-stat-card" style="border-left-color: var(--success-color)">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="dashboard-stat-label">A Receber</div>
+                        <div class="dashboard-stat-value">R$ {{ "%.2f"|format(receivables_total) }}</div>
+                    </div>
+                    <div style="color: var(--success-color)">
+                        <i class="fas fa-arrow-up fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-gradient-warning text-white shadow">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-uppercase mb-1">A Pagar</div>
-                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(payables_total) }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-arrow-down fa-2x opacity-75"></i>
-                        </div>
+            <div class="dashboard-stat-card" style="border-left-color: var(--warning-color)">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="dashboard-stat-label">A Pagar</div>
+                        <div class="dashboard-stat-value">R$ {{ "%.2f"|format(payables_total) }}</div>
+                    </div>
+                    <div style="color: var(--warning-color)">
+                        <i class="fas fa-arrow-down fa-2x"></i>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card bg-gradient-info text-white shadow">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-uppercase mb-1">Receita Mensal</div>
-                            <div class="h5 mb-0 font-weight-bold">R$ {{ "%.2f"|format(monthly_revenue) }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-chart-line fa-2x opacity-75"></i>
-                        </div>
+            <div class="dashboard-stat-card" style="border-left-color: var(--secondary-color)">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="dashboard-stat-label">Receita Mensal</div>
+                        <div class="dashboard-stat-value">R$ {{ "%.2f"|format(monthly_revenue) }}</div>
+                    </div>
+                    <div class="text-secondary">
+                        <i class="fas fa-chart-line fa-2x"></i>
                     </div>
                 </div>
             </div>
