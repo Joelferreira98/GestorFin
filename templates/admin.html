@@ -143,15 +143,24 @@
                                     <td>{{ user.email }}</td>
                                     <td>{{ user.phone or '-' }}</td>
                                     <td>
-                                        {% if user.user_plan %}
-                                            <span class="badge 
-                                                {% if user.user_plan.plan_name == 'Basic' %}bg-secondary
-                                                {% elif user.user_plan.plan_name == 'Premium' %}bg-primary
-                                                {% else %}bg-warning{% endif %}">
-                                                {{ user.user_plan.plan_name }}
-                                            </span>
+                                        {% set user_plan = user.user_plan %}
+                                        {% if user_plan %}
+                                            {% if user_plan.plan_name == 'Free' %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-gift me-1"></i>Gratuito
+                                                </span>
+                                            {% elif user_plan.plan_name == 'Premium' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-star me-1"></i>Premium
+                                                </span>
+                                                {% if user_plan.expires_at %}
+                                                    <br><small class="text-muted">
+                                                        Expira: {{ user_plan.expires_at.strftime('%d/%m/%Y') }}
+                                                    </small>
+                                                {% endif %}
+                                            {% endif %}
                                         {% else %}
-                                            <span class="badge bg-danger">Sem plano</span>
+                                            <span class="badge bg-light text-dark">Sem plano</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -164,7 +173,7 @@
                                     <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="showUserModal({{ user.id }}, '{{ user.username }}', '{{ user.user_plan.plan_name if user.user_plan else 'Basic' }}')" data-bs-toggle="modal" data-bs-target="#userModal">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="showUserModal({{ user.id }}, '{{ user.username }}', '{{ user.user_plan.plan_name if user.user_plan else "Free" }}', '{{ user.user_plan.expires_at.strftime("%Y-%m-%d") if user.user_plan and user.user_plan.expires_at else "" }}')" data-bs-toggle="modal" data-bs-target="#userModal">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <form method="POST" action="{{ url_for('admin.toggle_admin', user_id=user.id) }}" class="d-inline">
@@ -619,52 +628,11 @@
     </div>
 </div>
 
-<!-- User Management Modal -->
-<div class="modal fade" id="userModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" id="userForm">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Gerenciar Usuário</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Usuário:</label>
-                        <strong id="modal_username"></strong>
-                    </div>
-                    <div class="mb-3">
-                        <label for="plan_name" class="form-label">Plano</label>
-                        <select class="form-select" id="plan_name" name="plan_name" required>
-                            <option value="Basic">Basic (10 clientes, 50 contas)</option>
-                            <option value="Premium">Premium (50 clientes, 200 contas)</option>
-                            <option value="Enterprise">Enterprise (Ilimitado)</option>
-                        </select>
-                    </div>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>Atenção:</strong> Alterar o plano afetará os limites do usuário imediatamente.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>Atualizar Plano
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endblock %}
+
 
 {% block scripts %}
 <script>
-function showUserModal(userId, username, currentPlan) {
-    document.getElementById('userForm').action = `/admin/users/${userId}/update_plan`;
-    document.getElementById('modal_username').textContent = username;
-    document.getElementById('plan_name').value = currentPlan;
-}
+
 
 function testEvolutionAPI() {
     const btn = event.target;
@@ -715,5 +683,144 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+</script>
+
+<!-- Modal de Edição de Usuário -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Gerenciar Usuário
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="userForm" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Informações do Usuário -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h6 class="m-0"><i class="fas fa-user me-1"></i>Informações</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <div class="avatar-lg bg-primary rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px;">
+                                            <i class="fas fa-user fa-2x text-white"></i>
+                                        </div>
+                                        <h5 class="mt-2" id="modalUserName">Nome do Usuário</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Configurações de Plano -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h6 class="m-0"><i class="fas fa-crown me-1"></i>Plano do Usuário</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="modal_plan_name" class="form-label">Tipo de Plano</label>
+                                        <select class="form-select" id="modal_plan_name" name="plan_name" onchange="toggleModalDurationField()">
+                                            <option value="Free">Gratuito (5 clientes, 20 contas)</option>
+                                            <option value="Premium">Premium (Ilimitado - R$ 29,90/mês)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3" id="modal_duration_field" style="display: none;">
+                                        <label for="modal_duration_days" class="form-label">Duração (dias)</label>
+                                        <select class="form-select" id="modal_duration_days" name="duration_days">
+                                            <option value="7">7 dias (teste)</option>
+                                            <option value="30" selected>30 dias</option>
+                                            <option value="60">60 dias</option>
+                                            <option value="90">90 dias</option>
+                                            <option value="365">365 dias (anual)</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="plan-info">
+                                        <div id="modal-free-info" class="plan-details">
+                                            <h6 class="text-secondary">Plano Gratuito</h6>
+                                            <ul class="list-unstyled small">
+                                                <li><i class="fas fa-check text-success me-1"></i>5 clientes</li>
+                                                <li><i class="fas fa-check text-success me-1"></i>20 contas a receber</li>
+                                                <li><i class="fas fa-check text-success me-1"></i>20 contas a pagar</li>
+                                                <li><i class="fas fa-times text-danger me-1"></i>Sem IA Insights</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div id="modal-premium-info" class="plan-details" style="display: none;">
+                                            <h6 class="text-success">Plano Premium</h6>
+                                            <ul class="list-unstyled small">
+                                                <li><i class="fas fa-check text-success me-1"></i>Clientes ilimitados</li>
+                                                <li><i class="fas fa-check text-success me-1"></i>Contas ilimitadas</li>
+                                                <li><i class="fas fa-check text-success me-1"></i>IA Insights</li>
+                                                <li><i class="fas fa-check text-success me-1"></i>WhatsApp Integration</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let modalCurrentUserId = null;
+
+function showUserModal(userId, username, currentPlan, expiresAt) {
+    modalCurrentUserId = userId;
+    document.getElementById('modalUserName').textContent = username;
+    document.getElementById('modal_plan_name').value = currentPlan;
+    
+    // Update form action
+    document.getElementById('userForm').action = `/admin/users/${userId}/update_plan`;
+    
+    toggleModalDurationField();
+    toggleModalPlanInfo();
+}
+
+function toggleModalDurationField() {
+    const planName = document.getElementById('modal_plan_name').value;
+    const durationField = document.getElementById('modal_duration_field');
+    
+    if (planName === 'Premium') {
+        durationField.style.display = 'block';
+    } else {
+        durationField.style.display = 'none';
+    }
+    
+    toggleModalPlanInfo();
+}
+
+function toggleModalPlanInfo() {
+    const planName = document.getElementById('modal_plan_name').value;
+    const freeInfo = document.getElementById('modal-free-info');
+    const premiumInfo = document.getElementById('modal-premium-info');
+    
+    if (planName === 'Premium') {
+        freeInfo.style.display = 'none';
+        premiumInfo.style.display = 'block';
+    } else {
+        freeInfo.style.display = 'block';
+        premiumInfo.style.display = 'none';
+    }
+}
 </script>
 {% endblock %}

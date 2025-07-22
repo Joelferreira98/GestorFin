@@ -37,31 +37,71 @@ def update_plan(user_id):
     user_plan = UserPlan.query.filter_by(user_id=user_id).first()
     
     plan_name = request.form.get('plan_name')
+    duration_days = int(request.form.get('duration_days', 30))
     
     if not user_plan:
         user_plan = UserPlan(user_id=user_id)
         db.session.add(user_plan)
     
-    # Set plan limits based on plan name
-    if plan_name == 'Basic':
-        user_plan.max_clients = 10
-        user_plan.max_receivables = 50
-        user_plan.max_payables = 50
+    # Set plan limits based on new plan structure
+    if plan_name == 'Free':
+        user_plan.max_clients = 5
+        user_plan.max_receivables = 20
+        user_plan.max_payables = 20
+        user_plan.expires_at = None  # Plano gratuito não expira
     elif plan_name == 'Premium':
-        user_plan.max_clients = 50
-        user_plan.max_receivables = 200
-        user_plan.max_payables = 200
-    elif plan_name == 'Enterprise':
-        user_plan.max_clients = 999
-        user_plan.max_receivables = 9999
-        user_plan.max_payables = 9999
+        user_plan.max_clients = 999999
+        user_plan.max_receivables = 999999
+        user_plan.max_payables = 999999
+        # Definir expiração para planos Premium
+        user_plan.expires_at = datetime.utcnow() + timedelta(days=duration_days)
     
     user_plan.plan_name = plan_name
-    user_plan.expires_at = datetime.utcnow() + timedelta(days=30)
+    user_plan.is_active = True
     
-    db.session.commit()
+    try:
+        db.session.commit()
+        
+        expiry_text = ""
+        if plan_name == 'Premium':
+            expiry_date = user_plan.expires_at.strftime('%d/%m/%Y')
+            expiry_text = f" (expira em {expiry_date})"
+        
+        flash(f'Plano do usuário {user.username} atualizado para {plan_name}{expiry_text}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar plano: {str(e)}', 'error')
     
-    flash(f'Plano do usuário atualizado para {plan_name}!', 'success')
+    return redirect(url_for('admin.index'))
+
+@admin_bp.route('/users/<int:user_id>/extend_plan', methods=['POST'])
+@admin_required
+def extend_plan(user_id):
+    """Estender duração do plano Premium"""
+    user = User.query.get_or_404(user_id)
+    user_plan = UserPlan.query.filter_by(user_id=user_id).first()
+    
+    if not user_plan or user_plan.plan_name != 'Premium':
+        flash('Usuário não possui plano Premium para estender!', 'error')
+        return redirect(url_for('admin.index'))
+    
+    days_to_add = int(request.form.get('days', 30))
+    
+    if user_plan.expires_at:
+        # Se já tem data de expiração, adicionar mais dias
+        user_plan.expires_at = user_plan.expires_at + timedelta(days=days_to_add)
+    else:
+        # Se não tem data de expiração, criar uma nova
+        user_plan.expires_at = datetime.utcnow() + timedelta(days=days_to_add)
+    
+    try:
+        db.session.commit()
+        expiry_date = user_plan.expires_at.strftime('%d/%m/%Y')
+        flash(f'Plano Premium de {user.username} estendido por {days_to_add} dias (expira em {expiry_date})!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao estender plano: {str(e)}', 'error')
+    
     return redirect(url_for('admin.index'))
 
 @admin_bp.route('/system_settings', methods=['POST'])
