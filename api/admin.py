@@ -3,6 +3,10 @@ from app import db
 from models import User, UserPlan, SystemSettings
 from utils import admin_required, get_current_user
 from datetime import datetime, timedelta
+import requests
+import logging
+import os
+import uuid
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -113,17 +117,114 @@ def update_system_settings():
         settings = SystemSettings()
         db.session.add(settings)
     
+    # Update basic settings
     settings.system_name = request.form.get('system_name')
-    settings.logo_url = request.form.get('logo_url')
-    settings.favicon_url = request.form.get('favicon_url')
+    settings.system_domain = request.form.get('system_domain')
     settings.primary_color = request.form.get('primary_color')
     settings.secondary_color = request.form.get('secondary_color')
     settings.description = request.form.get('description')
     
-    db.session.commit()
+    # Handle logo upload
+    logo_file = request.files.get('logo_file')
+    if logo_file and logo_file.filename:
+        logo_url = handle_file_upload(logo_file, 'logo', max_size_mb=2)
+        if logo_url:
+            # Remove old logo if exists
+            if settings.logo_url:
+                remove_old_file(settings.logo_url)
+            settings.logo_url = logo_url
     
-    flash('Configurações do sistema atualizadas!', 'success')
+    # Handle favicon upload
+    favicon_file = request.files.get('favicon_file')
+    if favicon_file and favicon_file.filename:
+        favicon_url = handle_file_upload(favicon_file, 'favicon', max_size_mb=1)
+        if favicon_url:
+            # Remove old favicon if exists
+            if settings.favicon_url:
+                remove_old_file(settings.favicon_url)
+            settings.favicon_url = favicon_url
+    
+    try:
+        db.session.commit()
+        flash('Configurações do sistema atualizadas!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao salvar configurações: {str(e)}', 'error')
+    
     return redirect(url_for('admin.index'))
+
+def handle_file_upload(file, file_type, max_size_mb=2):
+    """Handle file upload for logo/favicon"""
+    from werkzeug.utils import secure_filename
+    try:
+        from PIL import Image
+    except ImportError:
+        # Fallback if Pillow is not available
+        flash('Sistema de processamento de imagens não disponível. Contate o administrador.', 'error')
+        return None
+    
+    try:
+        # Check file size
+        file.seek(0, 2)  # Seek to end of file
+        file_size = file.tell()
+        file.seek(0)  # Reset to beginning
+        
+        if file_size > max_size_mb * 1024 * 1024:
+            flash(f'Arquivo muito grande! Máximo {max_size_mb}MB.', 'error')
+            return None
+        
+        # Create uploads directory
+        upload_dir = 'static/uploads/system'
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Generate secure filename
+        file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'png'
+        filename = f"{file_type}_{uuid.uuid4().hex}.{file_extension}"
+        filepath = os.path.join(upload_dir, filename)
+        
+        # Save and optimize image
+        file.save(filepath)
+        
+        # Resize if needed (logo max 300x100, favicon max 32x32)
+        if file_type == 'logo':
+            max_size = (300, 100)
+        else:  # favicon
+            max_size = (32, 32)
+        
+        with Image.open(filepath) as img:
+            # Convert to RGB if necessary (for PNG with transparency)
+            if img.mode not in ('RGB', 'RGBA'):
+                img = img.convert('RGBA')
+            
+            # Resize maintaining aspect ratio
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
+            
+            # Save optimized image
+            if file_extension.lower() == 'png':
+                img.save(filepath, 'PNG', optimize=True)
+            elif file_extension.lower() in ['jpg', 'jpeg']:
+                if img.mode == 'RGBA':
+                    img = img.convert('RGB')
+                img.save(filepath, 'JPEG', optimize=True, quality=85)
+            else:
+                img.save(filepath)
+        
+        # Return URL path
+        return f"/static/uploads/system/{filename}"
+        
+    except Exception as e:
+        flash(f'Erro no upload: {str(e)}', 'error')
+        return None
+
+def remove_old_file(file_url):
+    """Remove old uploaded file"""
+    try:
+        if file_url and file_url.startswith('/static/'):
+            file_path = file_url[1:]  # Remove leading slash
+            if os.path.exists(file_path):
+                os.remove(file_path)
+    except Exception:
+        pass  # Silently ignore errors when removing old files
 
 @admin_bp.route('/evolution_api', methods=['POST'])
 @admin_required

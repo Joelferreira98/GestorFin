@@ -52,17 +52,34 @@ with app.app_context():
 @app.context_processor
 def inject_user_plan():
     """Inject user plan information into all templates"""
+    from models import SystemSettings
+    
+    # Get system settings
+    system_settings = SystemSettings.query.first()
+    
+    context = {
+        'system_name': system_settings.system_name if system_settings else 'FinanceiroMax',
+        'system_logo': system_settings.logo_url if system_settings else None,
+        'system_favicon': system_settings.favicon_url if system_settings else None,
+        'primary_color': system_settings.primary_color if system_settings else '#007bff',
+        'secondary_color': system_settings.secondary_color if system_settings else '#6c757d'
+    }
+    
+    # Add user plan info
     if 'user_id' in session:
         from utils import get_user_plan_name, has_premium_access
         user_id = session['user_id']
-        return {
+        context.update({
             'current_user_plan': get_user_plan_name(user_id),
             'has_premium_access': has_premium_access(user_id)
-        }
-    return {
-        'current_user_plan': 'Free',
-        'has_premium_access': False
-    }
+        })
+    else:
+        context.update({
+            'current_user_plan': 'Free',
+            'has_premium_access': False
+        })
+    
+    return context
 
 # Register blueprints
 from api.auth import auth_bp

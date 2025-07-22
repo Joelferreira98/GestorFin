@@ -210,6 +210,7 @@ class SystemSettings(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     system_name = db.Column(db.String(100), default='FinanceiroMax')
+    system_domain = db.Column(db.String(200))
     logo_url = db.Column(db.String(200))
     favicon_url = db.Column(db.String(200))
     primary_color = db.Column(db.String(7), default='#007bff')

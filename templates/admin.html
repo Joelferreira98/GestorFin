@@ -206,7 +206,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Configurações do Sistema</h6>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('admin.update_system_settings') }}">
+                    <form method="POST" action="{{ url_for('admin.update_system_settings') }}" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -216,8 +216,41 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="logo_url" class="form-label">URL do Logo</label>
-                                    <input type="url" class="form-control" id="logo_url" name="logo_url" value="{{ system_settings.logo_url if system_settings else '' }}">
+                                    <label for="system_domain" class="form-label">Domínio do Sistema</label>
+                                    <input type="text" class="form-control" id="system_domain" name="system_domain" 
+                                           placeholder="meudominio.com.br" 
+                                           value="{{ system_settings.system_domain if system_settings else '' }}">
+                                    <small class="form-text text-muted">Usado para gerar links públicos (WhatsApp, vendas parceladas)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Logo Upload -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="logo_file" class="form-label">Logo do Sistema</label>
+                                    <input type="file" class="form-control" id="logo_file" name="logo_file" accept="image/*">
+                                    <small class="form-text text-muted">Recomendado: PNG ou SVG, máx. 2MB</small>
+                                    {% if system_settings and system_settings.logo_url %}
+                                        <div class="mt-2">
+                                            <img src="{{ system_settings.logo_url }}" alt="Logo atual" style="max-height: 50px;">
+                                            <small class="text-muted ms-2">Logo atual</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="favicon_file" class="form-label">Favicon</label>
+                                    <input type="file" class="form-control" id="favicon_file" name="favicon_file" accept="image/x-icon,image/png,image/gif,image/jpeg">
+                                    <small class="form-text text-muted">Recomendado: ICO ou PNG 32x32, máx. 1MB</small>
+                                    {% if system_settings and system_settings.favicon_url %}
+                                        <div class="mt-2">
+                                            <img src="{{ system_settings.favicon_url }}" alt="Favicon atual" style="width: 16px; height: 16px;">
+                                            <small class="text-muted ms-2">Favicon atual</small>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -237,10 +270,7 @@
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="favicon_url" class="form-label">URL do Favicon</label>
-                            <input type="url" class="form-control" id="favicon_url" name="favicon_url" value="{{ system_settings.favicon_url if system_settings else '' }}">
-                        </div>
+
                         
                         <div class="mb-3">
                             <label for="description" class="form-label">Descrição do Sistema</label>
