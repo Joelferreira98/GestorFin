@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Planos e Preços - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2><i class="fas fa-star me-2"></i>Planos e Preços</h2>
+            <p class="text-muted">Escolha o plano ideal para o seu negócio</p>
+        </div>
+    </div>
+    
+    <!-- Plano Atual -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Seu Plano Atual:</strong> 
+                {{ plans[current_plan]['name'] }}
+                {% if user_plan and user_plan.expires_at %}
+                    - Expira em {{ user_plan.expires_at.strftime('%d/%m/%Y às %H:%M') }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas de Uso -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-modern shadow">
+                <div class="card-header py-3">
+                    <h6 class="card-title">
+                        <i class="fas fa-chart-bar me-2"></i>Seu Uso Atual
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="usage-stat">
+                                <div class="usage-icon">
+                                    <i class="fas fa-users text-primary"></i>
+                                </div>
+                                <div class="usage-info">
+                                    <h4>{{ usage_stats.clients_count }}</h4>
+                                    <span class="text-muted">
+                                        {% if user_plan %}
+                                            de {{ user_plan.max_clients if user_plan.max_clients < 999999 else '∞' }} clientes
+                                        {% else %}
+                                            de 5 clientes
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="usage-stat">
+                                <div class="usage-icon">
+                                    <i class="fas fa-arrow-up text-success"></i>
+                                </div>
+                                <div class="usage-info">
+                                    <h4>{{ usage_stats.receivables_count }}</h4>
+                                    <span class="text-muted">
+                                        {% if user_plan %}
+                                            de {{ user_plan.max_receivables if user_plan.max_receivables < 999999 else '∞' }} contas a receber
+                                        {% else %}
+                                            de 20 contas a receber
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="usage-stat">
+                                <div class="usage-icon">
+                                    <i class="fas fa-arrow-down text-warning"></i>
+                                </div>
+                                <div class="usage-info">
+                                    <h4>{{ usage_stats.payables_count }}</h4>
+                                    <span class="text-muted">
+                                        {% if user_plan %}
+                                            de {{ user_plan.max_payables if user_plan.max_payables < 999999 else '∞' }} contas a pagar
+                                        {% else %}
+                                            de 20 contas a pagar
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Planos Disponíveis -->
+    <div class="row">
+        {% for plan_id, plan in plans.items() %}
+        <div class="col-lg-6 mb-4">
+            <div class="card-modern shadow h-100 {{ 'border-success' if plan_id == 'Premium' else '' }}">
+                {% if plan_id == 'Premium' %}
+                <div class="ribbon ribbon-success">Mais Popular</div>
+                {% endif %}
+                
+                <div class="card-header text-center py-4">
+                    <h3 class="card-title mb-2">{{ plan.name }}</h3>
+                    <div class="plan-price">
+                        {% if plan.price == 0 %}
+                            <span class="price">Grátis</span>
+                        {% else %}
+                            <span class="price">R$ {{ "%.2f"|format(plan.price) }}</span>
+                            <span class="period">/mês</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <ul class="plan-features">
+                        {% for feature in plan.features %}
+                        <li>
+                            <i class="fas fa-check text-success me-2"></i>
+                            {{ feature }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="card-footer text-center py-3">
+                    {% if current_plan == plan_id %}
+                        <button class="btn-modern btn-success-modern" disabled>
+                            <i class="fas fa-check me-1"></i>Plano Atual
+                        </button>
+                    {% elif plan_id == 'Free' %}
+                        <form method="POST" action="{{ url_for('plans.upgrade', plan_name=plan_id) }}" style="display: inline;">
+                            <button type="submit" class="btn-modern btn-outline-modern">
+                                <i class="fas fa-download me-1"></i>Usar Plano Gratuito
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="{{ url_for('plans.upgrade', plan_name=plan_id) }}" style="display: inline;">
+                            <button type="submit" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-star me-1"></i>Fazer Upgrade
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Perguntas Frequentes -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4 text-center">Perguntas Frequentes</h3>
+            <div class="card-modern shadow">
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    O que acontece quando eu atinjo o limite do plano gratuito?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Quando você atingir os limites do plano gratuito, você receberá uma notificação e não poderá adicionar mais itens até fazer o upgrade para o plano Premium ou remover alguns itens existentes.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Posso cancelar o plano Premium a qualquer momento?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim! Você pode voltar para o plano gratuito a qualquer momento. Seus dados permanecerão salvos, mas você ficará limitado às cotas do plano gratuito.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    O que está incluído no suporte prioritário?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    O suporte prioritário inclui resposta mais rápida às suas dúvidas, suporte via WhatsApp e acesso prioritário a novas funcionalidades.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.plan-price {
+    margin-bottom: 1rem;
+}
+
+.price {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.period {
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-features li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.plan-features li:last-child {
+    border-bottom: none;
+}
+
+.usage-stat {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.usage-icon {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.usage-info h4 {
+    margin: 0;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.ribbon {
+    position: absolute;
+    top: 20px;
+    right: -10px;
+    padding: 5px 15px;
+    background: var(--success-color);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    transform: rotate(10deg);
+    z-index: 1;
+}
+
+.ribbon-success {
+    background: var(--success-color);
+}
+
+.card-modern.border-success {
+    border: 2px solid var(--success-color);
+    position: relative;
+}
+
+.accordion-button {
+    background: var(--background-secondary);
+    border: none;
+    color: var(--text-primary);
+}
+
+.accordion-button:not(.collapsed) {
+    background: var(--primary-color);
+    color: white;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar limites do plano a cada 30 segundos
+    setInterval(checkPlanLimits, 30000);
+    
+    function checkPlanLimits() {
+        fetch('/plans/check_limits')
+            .then(response => response.json())
+            .then(data => {
+                if (data.plan_expired) {
+                    showNotification('Seu plano Premium expirou e foi alterado para Gratuito', 'warning');
+                }
+                
+                // Verificar se algum limite foi excedido
+                if (data.limits_exceeded.clients || data.limits_exceeded.receivables || data.limits_exceeded.payables) {
+                    showPlanLimitWarning(data);
+                }
+            })
+            .catch(error => console.error('Erro ao verificar limites:', error));
+    }
+    
+    function showPlanLimitWarning(data) {
+        const warnings = [];
+        if (data.limits_exceeded.clients) warnings.push('clientes');
+        if (data.limits_exceeded.receivables) warnings.push('contas a receber');
+        if (data.limits_exceeded.payables) warnings.push('contas a pagar');
+        
+        if (warnings.length > 0) {
+            showNotification(
+                `Você atingiu o limite de ${warnings.join(', ')} do seu plano atual. Considere fazer upgrade.`,
+                'warning'
+            );
+        }
+    }
+    
+    function showNotification(message, type) {
+        // Criar notificação toast
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        // Remover após 10 segundos
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 10000);
+    }
+});
+</script>
+{% endblock %}

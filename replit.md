@@ -54,7 +54,9 @@ Preferred communication style: Simple, everyday language.
 
 ### Subscription System
 - **User Plans**: Sistema de planos com limites por funcionalidade
-- **Plan Types**: Basic, Premium, Enterprise com diferentes capacidades
+- **Plan Types**: Free (gratuito limitado) e Premium (pago ilimitado)
+- **Automatic Limits**: Verificação de limites integrada em todas as operações CRUD
+- **Plan Upgrades**: Interface de self-service para upgrade de planos
 - **Admin Panel**: Painel administrativo para gestão de usuários e planos
 
 ## Data Flow
@@ -143,5 +145,13 @@ Preferred communication style: Simple, everyday language.
   - Remoção de fotos antigas automaticamente
   - Estatísticas da conta na página de perfil
   - Interface acessível via menu dropdown do usuário
+
+- **Sistema de Planos Gratuito e Premium Implementado**: Monetização com limites flexíveis
+  - **Plano Gratuito**: 5 clientes, 20 contas a receber, 20 contas a pagar
+  - **Plano Premium**: Recursos ilimitados por R$ 29,90/mês
+  - Verificação automática de limites em todas as operações
+  - Interface de upgrade integrada ao sistema
+  - Notificações de limite atingido com chamadas para ação
+  - Expiração automática do plano Premium (reverte para Gratuito)
 
 The system is designed as a comprehensive financial management solution with modern web technologies, PWA capabilities, AI-powered financial insights, and extensive integration possibilities, particularly focused on the Brazilian market with CPF/CNPJ validation and WhatsApp integration.

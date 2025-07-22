@@ -1,0 +1,78 @@
+<!-- Modal de Limite do Plano -->
+<div class="modal fade" id="planLimitModal" tabindex="-1" aria-labelledby="planLimitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="planLimitModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Limite do Plano Atingido
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="text-center">
+                            <i class="fas fa-lock fa-3x text-warning mb-3"></i>
+                            <h5>Plano Gratuito</h5>
+                            <p class="text-muted">Você atingiu os limites do seu plano atual</p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-users me-2"></i>5 clientes</li>
+                                <li><i class="fas fa-arrow-up me-2"></i>20 contas a receber</li>
+                                <li><i class="fas fa-arrow-down me-2"></i>20 contas a pagar</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-center">
+                            <i class="fas fa-star fa-3x text-success mb-3"></i>
+                            <h5 class="text-success">Plano Premium</h5>
+                            <p class="text-muted">Desbloqueie todo o potencial</p>
+                            <ul class="list-unstyled text-start">
+                                <li><i class="fas fa-check text-success me-2"></i>Clientes ilimitados</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Contas ilimitadas</li>
+                                <li><i class="fas fa-check text-success me-2"></i>IA Insights</li>
+                                <li><i class="fas fa-check text-success me-2"></i>WhatsApp Integration</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Relatórios avançados</li>
+                            </ul>
+                            <div class="price-tag">
+                                <span class="h4 text-success">R$ 29,90</span>
+                                <small class="text-muted">/mês</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Continuar com Gratuito
+                </button>
+                <form method="POST" action="/plans/upgrade/Premium" style="display: inline;">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-star me-1"></i>Fazer Upgrade Agora
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função para mostrar modal de limite automaticamente
+function showPlanLimitModal(limitType) {
+    const modal = new bootstrap.Modal(document.getElementById('planLimitModal'));
+    modal.show();
+}
+
+// Verificar limites automaticamente quando necessário
+function checkAndShowLimitModal() {
+    // Esta função será chamada quando o usuário tentar adicionar algo e atingir o limite
+    if (window.planLimitReached) {
+        showPlanLimitModal(window.limitType);
+    }
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    checkAndShowLimitModal();
+});
+</script>

@@ -22,21 +22,21 @@ def create_sample_data():
     db.session.add(admin)
     db.session.commit()
     
-    # Create admin plan
+    # Create admin plan (Premium ilimitado)
     admin_plan = UserPlan(
         user_id=admin.id,
-        plan_name='Enterprise',
-        max_clients=999,
-        max_receivables=9999,
-        max_payables=9999
+        plan_name='Premium',
+        max_clients=999999,
+        max_receivables=999999,
+        max_payables=999999
     )
     db.session.add(admin_plan)
     
     # Create sample users
     users_data = [
-        {'username': 'maria', 'email': 'maria@email.com', 'phone': '11988888888', 'plan': 'Basic'},
+        {'username': 'maria', 'email': 'maria@email.com', 'phone': '11988888888', 'plan': 'Free'},
         {'username': 'joao', 'email': 'joao@email.com', 'phone': '11977777777', 'plan': 'Premium'},
-        {'username': 'ana', 'email': 'ana@email.com', 'phone': '11966666666', 'plan': 'Basic'}
+        {'username': 'ana', 'email': 'ana@email.com', 'phone': '11966666666', 'plan': 'Free'}
     ]
     
     users = []
@@ -50,11 +50,10 @@ def create_sample_data():
         db.session.add(user)
         db.session.commit()
         
-        # Create user plan
+        # Create user plan with new structure
         plan_limits = {
-            'Basic': {'clients': 10, 'receivables': 50, 'payables': 50},
-            'Premium': {'clients': 50, 'receivables': 200, 'payables': 200},
-            'Enterprise': {'clients': 999, 'receivables': 9999, 'payables': 9999}
+            'Free': {'clients': 5, 'receivables': 20, 'payables': 20},
+            'Premium': {'clients': 999999, 'receivables': 999999, 'payables': 999999}
         }
         
         limits = plan_limits[user_data['plan']]
@@ -63,7 +62,8 @@ def create_sample_data():
             plan_name=user_data['plan'],
             max_clients=limits['clients'],
             max_receivables=limits['receivables'],
-            max_payables=limits['payables']
+            max_payables=limits['payables'],
+            expires_at=datetime.utcnow() + timedelta(days=30) if user_data['plan'] == 'Premium' else None
         )
         db.session.add(user_plan)
         users.append(user)

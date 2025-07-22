@@ -62,6 +62,7 @@ from api.reminders import reminders_bp
 from api.ai_insights import ai_insights_bp
 from api.dashboard import dashboard_bp
 from api.profile import profile_bp
+from api.plans import plans_bp
 
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(clients_bp, url_prefix='/clients')
@@ -75,6 +76,7 @@ app.register_blueprint(tasks_bp, url_prefix='/tasks')
 app.register_blueprint(reminders_bp, url_prefix='/reminders')
 app.register_blueprint(ai_insights_bp, url_prefix='/ai_insights')
 app.register_blueprint(profile_bp, url_prefix='/profile')
+app.register_blueprint(plans_bp, url_prefix='/plans')
 app.register_blueprint(dashboard_bp, url_prefix='/')
 
 if __name__ == '__main__':

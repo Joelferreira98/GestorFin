@@ -19,11 +19,11 @@ def add():
     user = get_current_user()
     
     # Check plan limits
-    user_plan = UserPlan.query.filter_by(user_id=user.id).first()
-    current_clients = Client.query.filter_by(user_id=user.id).count()
-    
-    if current_clients >= user_plan.max_clients:
-        flash(f'Limite de {user_plan.max_clients} clientes atingido para o plano {user_plan.plan_name}!', 'error')
+    from api.plans import check_plan_limit
+    if not check_plan_limit(user, 'clients'):
+        user_plan = UserPlan.query.filter_by(user_id=user.id).first()
+        limit = user_plan.max_clients if user_plan else 5
+        flash(f'Limite de {limit} clientes atingido! Considere fazer upgrade para o plano Premium.', 'error')
         return redirect(url_for('clients.index'))
     
     if request.method == 'POST':
