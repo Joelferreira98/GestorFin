@@ -284,7 +284,7 @@ class FinancialAI:
                 {
                     "valor": float(p.amount),
                     "vencimento": p.due_date.isoformat(),
-                    "fornecedor": p.supplier_name or "N/A",
+                    "fornecedor": p.supplier.name if p.supplier else "N/A",
                     "status": p.status
                 } for p in future_payables
             ]
