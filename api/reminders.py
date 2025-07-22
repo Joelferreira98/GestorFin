@@ -86,9 +86,18 @@ def test_reminder():
             return redirect(url_for('reminders.index'))
         
         # Verificar se existe instância WhatsApp configurada
-        whatsapp_instance = os.environ.get('EVOLUTION_INSTANCE_NAME')
+        from models import UserWhatsAppInstance, SystemSettings
+        
+        # Verificar configurações do sistema
+        system_settings = SystemSettings.query.first()
+        if not system_settings or not system_settings.evolution_api_url or not system_settings.evolution_api_key:
+            flash('WhatsApp não configurado no sistema. Configure a Evolution API no painel administrativo.', 'warning')
+            return redirect(url_for('reminders.index'))
+            
+        # Verificar se existe instância conectada para o usuário
+        whatsapp_instance = UserWhatsAppInstance.query.filter_by(user_id=user.id, status='connected').first()
         if not whatsapp_instance:
-            flash('Instância WhatsApp não configurada. Configure no painel administrativo.', 'warning')
+            flash('Nenhuma instância WhatsApp conectada encontrada. Conecte uma instância na seção WhatsApp.', 'warning')
             return redirect(url_for('reminders.index'))
         
         # Contar contas que receberiam lembretes
