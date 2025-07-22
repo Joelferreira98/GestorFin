@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Script de Instalação do FinanceiroMax para VPS
-# Versão: 1.0
+# FinanceiroMax - Script de Instalação Automatizada
+# Versão: 1.3 - Corrigido problema de permissões Git  
 # Autor: Sistema FinanceiroMax
+# Data: Janeiro 2025
+# Repositório: https://github.com/Joelferreira98/GestorFin
 
 set -e
 
@@ -197,10 +199,20 @@ sudo mkdir -p /var/log/financeiro-max
 sudo chown $APP_USER:$APP_USER $APP_DIR
 sudo chown $APP_USER:$APP_USER /var/log/financeiro-max
 
-# Clonar/copiar aplicação
-log "Preparando aplicação..."
-sudo -u $APP_USER cp -r . $APP_DIR/
-cd $APP_DIR
+# Clonar aplicação do repositório GitHub
+log "Clonando aplicação do repositório..."
+if [[ -d "$APP_DIR/.git" ]]; then
+    log "Diretório já existe, atualizando..."
+    cd $APP_DIR
+    sudo -u $APP_USER git pull origin main
+else
+    log "Clonando do repositório GitHub..."
+    sudo -u $APP_USER git clone https://github.com/Joelferreira98/GestorFin.git $APP_DIR
+    cd $APP_DIR
+fi
+
+# Ajustar permissões após clone
+sudo chown -R $APP_USER:$APP_USER $APP_DIR
 
 # Criar ambiente virtual
 log "Criando ambiente virtual Python..."
