@@ -179,12 +179,27 @@ sudo tail -f /var/log/nginx/error.log
 ### Erro: "Could not open requirements file"
 ```bash
 # O sistema agora cria automaticamente o requirements.txt
-# Se ainda houver problemas, copie manualmente:
-cp requirements.production.txt requirements.txt
+# Se ainda houver problemas, use versões flexíveis:
+cp requirements-minimal.txt requirements.txt
 
-# Ou reinstale dependências:
+# Ou teste dependências antes da instalação:
+./test-requirements.sh
+
+# Para reinstalar dependências:
 cd /opt/financeiro-max
-sudo -u financeiro venv/bin/pip install -r requirements.production.txt
+sudo -u financeiro venv/bin/pip install -r requirements-minimal.txt
+```
+
+### Erro: "Could not find a version that satisfies the requirement"
+```bash
+# Testar dependências disponíveis:
+./test-requirements.sh
+
+# Usar versões mínimas compatíveis:
+cp requirements-minimal.txt requirements.txt
+
+# Ou criar requirements personalizado:
+pip install --dry-run flask flask-sqlalchemy flask-login
 ```
 
 ### Erro: "MySQL connection failed"

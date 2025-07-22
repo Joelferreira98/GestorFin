@@ -55,13 +55,13 @@ Sistema completo de gestão financeira com inteligência artificial, integraçõ
 
 ### Instalação Automatizada (VPS)
 
-#### Opção 1: Instalação Completa
+#### Opção 1: Instalação Completa (Recomendada)
 Para servidores novos sem MySQL:
 
 ```bash
 git clone <repository-url>
 cd financeiro-max
-chmod +x install.sh
+chmod +x *.sh
 ./install.sh
 ```
 
@@ -71,8 +71,19 @@ Para servidores que já possuem MySQL configurado:
 ```bash
 git clone <repository-url>
 cd financeiro-max
-chmod +x install-quick.sh
+chmod +x *.sh
 ./install-quick.sh
+```
+
+#### Opção 3: Teste Prévio de Dependências
+Para evitar problemas de versão:
+
+```bash
+git clone <repository-url>
+cd financeiro-max
+chmod +x *.sh
+./test-requirements.sh  # Testa compatibilidade
+./install.sh            # Instala com dependências compatíveis
 ```
 
 #### Configuração Interativa:

@@ -120,34 +120,36 @@ cd $APP_DIR
 sudo -u $APP_USER python3 -m venv venv
 sudo -u $APP_USER $APP_DIR/venv/bin/pip install --upgrade pip
 
-# Criar requirements.txt temporário se não existir
-if [[ ! -f requirements.txt ]] && [[ ! -f requirements.production.txt ]]; then
+# Escolher arquivo de requirements mais adequado
+if [[ -f requirements.production.txt ]]; then
+    REQUIREMENTS_FILE="requirements.production.txt"
+elif [[ -f requirements.txt ]]; then
+    REQUIREMENTS_FILE="requirements.txt"
+elif [[ -f requirements-minimal.txt ]]; then
+    REQUIREMENTS_FILE="requirements-minimal.txt"
+else
+    # Criar requirements temporário com versões flexíveis
     sudo -u $APP_USER tee $APP_DIR/requirements-temp.txt > /dev/null << 'EOF'
-Flask==3.0.0
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-SQLAlchemy==2.0.23
-Werkzeug==3.0.1
-PyMySQL==1.1.0
-mysqlclient==2.2.4
-gunicorn==21.2.0
-Pillow==10.1.0
-requests==2.31.0
-python-dateutil==2.8.2
-qrcode[pil]==7.4.2
-PyJWT==2.8.0
-email-validator==2.1.0
-cryptography==41.0.8
-APScheduler==3.10.4
-openai==1.3.8
-phonenumbers==8.13.26
-python-dotenv==1.0.0
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.0
+SQLAlchemy>=2.0.0
+Werkzeug>=3.0.0
+PyMySQL>=1.1.0
+gunicorn>=21.0.0
+Pillow>=10.0.0
+requests>=2.31.0
+python-dateutil>=2.8.0
+qrcode[pil]>=7.4.0
+PyJWT>=2.8.0
+email-validator>=2.1.0
+APScheduler>=3.10.0
+openai>=1.3.0
+phonenumbers>=8.13.0
+python-dotenv>=1.0.0
+cryptography
 EOF
     REQUIREMENTS_FILE="requirements-temp.txt"
-elif [[ -f requirements.production.txt ]]; then
-    REQUIREMENTS_FILE="requirements.production.txt"
-else
-    REQUIREMENTS_FILE="requirements.txt"
 fi
 
 log "Instalando dependências Python..."

@@ -1,0 +1,29 @@
+# FinanceiroMax - Dependências Mínimas (versões flexíveis)
+Flask>=3.0.0
+Flask-SQLAlchemy>=3.1.0
+Flask-Login>=0.6.0
+SQLAlchemy>=2.0.0
+Werkzeug>=3.0.0
+
+# Database drivers (instalar conforme necessário)
+PyMySQL>=1.1.0
+# mysqlclient>=2.2.0  # Descomente para melhor performance MySQL
+# psycopg2-binary>=2.9.0  # Descomente para PostgreSQL
+
+# Production server
+gunicorn>=21.0.0
+
+# Core functionality
+Pillow>=10.0.0
+requests>=2.31.0
+python-dateutil>=2.8.0
+qrcode[pil]>=7.4.0
+PyJWT>=2.8.0
+email-validator>=2.1.0
+APScheduler>=3.10.0
+openai>=1.3.0
+phonenumbers>=8.13.0
+python-dotenv>=1.0.0
+
+# Security (usar versão disponível)
+cryptography

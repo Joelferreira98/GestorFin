@@ -32,7 +32,7 @@ PyJWT==2.8.0
 email-validator==2.1.0
 
 # Security
-cryptography==41.0.8
+cryptography>=41.0.7
 
 # Task scheduling
 APScheduler==3.10.4
