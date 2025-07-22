@@ -15,16 +15,45 @@ logger = logging.getLogger(__name__)
 
 class FinancialAI:
     def __init__(self):
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if api_key:
-            self.client = OpenAI(api_key=api_key)
-            self.enabled = True
-        else:
+        self.client = None
+        self.enabled = False
+    
+    def _initialize_client(self):
+        """Inicializa o cliente OpenAI com a API key do banco de dados"""
+        try:
+            from models import SystemSettings
+            from app import app
+            
+            with app.app_context():
+                settings = SystemSettings.query.first()
+                if settings and settings.ai_enabled and settings.ai_api_key:
+                    try:
+                        self.client = OpenAI(api_key=settings.ai_api_key.strip())
+                        self.enabled = True
+                        return True
+                    except Exception as e:
+                        logging.error(f"Erro ao inicializar OpenAI client: {str(e)}")
+                        self.client = None
+                        self.enabled = False
+                        return False
+                else:
+                    self.client = None
+                    self.enabled = False
+                    return False
+        except Exception as e:
+            logging.error(f"Erro ao acessar configurações da IA: {str(e)}")
             self.client = None
             self.enabled = False
+            return False
+    
+    def update_client(self):
+        """Atualiza o cliente quando as configurações mudam"""
+        return self._initialize_client()
             
     def is_enabled(self):
         """Verifica se a IA está habilitada"""
+        if not self.enabled or self.client is None:
+            self._initialize_client()
         return self.enabled and self.client is not None
     
     def get_cash_flow_prediction(self, user_id, months_ahead=3):

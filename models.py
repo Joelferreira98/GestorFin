@@ -222,6 +222,7 @@ class SystemSettings(db.Model):
     
     # AI Settings
     ai_enabled = db.Column(db.Boolean, default=False)
+    ai_api_key = db.Column(db.Text)  # Armazenar API key criptografada
     ai_model = db.Column(db.String(50), default='gpt-4o')
     ai_temperature = db.Column(db.Float, default=0.3)
     ai_max_tokens = db.Column(db.Integer, default=2000)

@@ -54,6 +54,30 @@
                             </div>
                         </div>
 
+                        <!-- API Key Configuration -->
+                        <div class="mb-4">
+                            <label for="ai_api_key" class="form-label">
+                                <i class="fas fa-key me-2"></i>API Key da OpenAI
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="ai_api_key" name="ai_api_key" 
+                                       placeholder="sk-..." 
+                                       value="{% if settings.ai_api_key %}{{ '*' * 20 + settings.ai_api_key[-10:] if settings.ai_api_key|length > 10 else '*' * settings.ai_api_key|length }}{% endif %}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility()">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Obtida em <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>. 
+                                {% if settings.ai_api_key %}
+                                <span class="text-success">✓ Configurada</span>
+                                {% else %}
+                                <span class="text-warning">⚠ Não configurada</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
                         <hr>
 
                         <!-- Configurações do Modelo -->
@@ -200,24 +224,33 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-warning">
-                        <i class="fas fa-key me-2"></i>Configuração da API Key
+                        <i class="fas fa-key me-2"></i>Status da API Key
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
                         <small>
-                            <strong>Como configurar:</strong><br>
-                            1. Obtenha uma API key em <a href="https://platform.openai.com" target="_blank">platform.openai.com</a><br>
-                            2. Configure a variável de ambiente <code>OPENAI_API_KEY</code><br>
-                            3. Reinicie o sistema para aplicar
+                            <strong>Como obter uma API key:</strong><br>
+                            1. Acesse <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a><br>
+                            2. Faça login ou crie uma conta<br>
+                            3. Clique em "Create new secret key"<br>
+                            4. Copie a chave e cole no campo acima<br>
+                            5. Salve as configurações
                         </small>
                     </div>
                     
-                    {% if not ai_enabled %}
+                    {% if settings.ai_api_key %}
+                    <div class="alert alert-success">
+                        <small>
+                            <i class="fas fa-check-circle me-1"></i>
+                            API key configurada. Use o botão "Testar IA" para verificar a conectividade.
+                        </small>
+                    </div>
+                    {% else %}
                     <div class="alert alert-warning">
                         <small>
                             <i class="fas fa-exclamation-triangle me-1"></i>
-                            A API key não está configurada. Configure para habilitar recursos de IA.
+                            API key não configurada. Configure acima para habilitar recursos de IA.
                         </small>
                     </div>
                     {% endif %}
@@ -274,6 +307,30 @@ function resetToDefaults() {
 // Update temperature display
 document.getElementById('ai_temperature').addEventListener('input', function() {
     document.getElementById('tempValue').textContent = this.value;
+});
+
+// Toggle API key visibility
+function toggleApiKeyVisibility() {
+    const apiKeyInput = document.getElementById('ai_api_key');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+    } else {
+        apiKeyInput.type = 'password';
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+    }
+}
+
+// Clear API key field when focused for new input
+document.getElementById('ai_api_key').addEventListener('focus', function() {
+    if (this.value && this.value.includes('*')) {
+        this.value = '';
+        this.placeholder = 'Cole sua nova API key aqui...';
+    }
 });
 </script>
 {% endblock %}

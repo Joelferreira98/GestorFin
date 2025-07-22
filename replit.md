@@ -125,4 +125,14 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Sistema de sessões escalável
 - **Multi-tenancy**: Preparado para isolamento completo de dados por usuário
 
-The system is designed as a comprehensive financial management solution with modern web technologies, PWA capabilities, and extensive integration possibilities, particularly focused on the Brazilian market with CPF/CNPJ validation and WhatsApp integration.
+## Recent Changes
+
+### Janeiro 2025
+- **Sistema de IA Financeira Implementado**: Integração completa com OpenAI para análises preditivas
+  - Configuração via painel administrativo (não variáveis de ambiente)
+  - Predições de fluxo de caixa até 12 meses
+  - Análise de risco de inadimplência de clientes
+  - Insights estratégicos para otimização do negócio
+  - Interface dedicada em `/ai_insights/` no menu principal
+
+The system is designed as a comprehensive financial management solution with modern web technologies, PWA capabilities, AI-powered financial insights, and extensive integration possibilities, particularly focused on the Brazilian market with CPF/CNPJ validation and WhatsApp integration.

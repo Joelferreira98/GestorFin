@@ -71,12 +71,21 @@ def update_config():
     
     # Atualizar configurações específicas da IA
     settings.ai_enabled = request.form.get('ai_enabled') == 'on'
+    
+    # Atualizar API key se fornecida
+    api_key = request.form.get('ai_api_key', '').strip()
+    if api_key:
+        settings.ai_api_key = api_key
+    
     settings.ai_model = request.form.get('ai_model', 'gpt-4o')
     settings.ai_temperature = float(request.form.get('ai_temperature', 0.3))
     settings.ai_max_tokens = int(request.form.get('ai_max_tokens', 2000))
     settings.prediction_months = int(request.form.get('prediction_months', 3))
     
     db.session.commit()
+    
+    # Atualizar cliente OpenAI com nova configuração
+    financial_ai.update_client()
     
     flash('Configurações da IA atualizadas com sucesso!', 'success')
     return redirect(url_for('ai_insights.admin_config'))
@@ -85,10 +94,13 @@ def update_config():
 @admin_required
 def test_ai():
     """Testar conectividade da IA"""
+    # Forçar atualização do cliente antes do teste
+    financial_ai.update_client()
+    
     if not financial_ai.is_enabled():
         return jsonify({
             'success': False, 
-            'message': 'IA não configurada. Verifique se a OPENAI_API_KEY está definida nas variáveis de ambiente.'
+            'message': 'IA não configurada. Configure a API key da OpenAI no painel administrativo.'
         })
     
     try:
