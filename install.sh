@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # FinanceiroMax - Script de Instalação Automatizada
-# Versão: 1.3 - Corrigido problema de permissões Git  
+# Versão: 1.4 - Método git clone com diretório temporário
 # Autor: Sistema FinanceiroMax
 # Data: Janeiro 2025
 # Repositório: https://github.com/Joelferreira98/GestorFin
@@ -200,19 +200,24 @@ sudo chown $APP_USER:$APP_USER $APP_DIR
 sudo chown $APP_USER:$APP_USER /var/log/financeiro-max
 
 # Clonar aplicação do repositório GitHub
-log "Clonando aplicação do repositório..."
-if [[ -d "$APP_DIR/.git" ]]; then
-    log "Diretório já existe, atualizando..."
-    cd $APP_DIR
-    sudo -u $APP_USER git pull origin main
-else
-    log "Clonando do repositório GitHub..."
-    sudo -u $APP_USER git clone https://github.com/Joelferreira98/GestorFin.git $APP_DIR
-    cd $APP_DIR
-fi
+log "Baixando aplicação do repositório..."
+TEMP_DIR="/tmp/financeiro-clone-$$"
 
-# Ajustar permissões após clone
+# Clonar em diretório temporário
+log "Clonando repositório em diretório temporário..."
+git clone https://github.com/Joelferreira98/GestorFin.git $TEMP_DIR
+
+# Mover arquivos para diretório final
+log "Movendo arquivos para diretório de instalação..."
+cp -r $TEMP_DIR/* $APP_DIR/
+cp -r $TEMP_DIR/.git $APP_DIR/ 2>/dev/null || true
+
+# Limpar diretório temporário
+rm -rf $TEMP_DIR
+
+# Ajustar permissões
 sudo chown -R $APP_USER:$APP_USER $APP_DIR
+cd $APP_DIR
 
 # Criar ambiente virtual
 log "Criando ambiente virtual Python..."

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # FinanceiroMax - Script de Correção/Instalação
-# Versão: 1.3 - Corrigido problema de permissões Git
+# Versão: 1.4 - Método git clone com diretório temporário
 # Repositório: https://github.com/Joelferreira98/GestorFin
 
 set -e
@@ -64,9 +64,18 @@ if ! command -v git &>/dev/null; then
     apt-get install -y git
 fi
 
-# Clonar repositório como root e depois ajustar permissões
+# Clonar repositório em diretório temporário
 log "Clonando repositório GitHub..."
-git clone https://github.com/Joelferreira98/GestorFin.git "$APP_DIR"
+TEMP_DIR="/tmp/financeiro-clone-$$"
+git clone https://github.com/Joelferreira98/GestorFin.git "$TEMP_DIR"
+
+# Mover arquivos para diretório final
+log "Movendo arquivos para diretório de instalação..."
+cp -r "$TEMP_DIR"/* "$APP_DIR"/
+cp -r "$TEMP_DIR"/.git "$APP_DIR"/ 2>/dev/null || true
+
+# Limpar diretório temporário
+rm -rf "$TEMP_DIR"
 
 # Ajustar todas as permissões
 log "Ajustando permissões..."
