@@ -16,9 +16,14 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
+            # Buscar plano do usuário
+            user_plan = UserPlan.query.filter_by(user_id=user.id).first()
+            user_plan_name = user_plan.plan_name if user_plan else 'Free'
+            
             session['user_id'] = user.id
             session['username'] = user.username
             session['is_admin'] = user.is_admin
+            session['user_plan_name'] = user_plan_name
             
             flash('Login realizado com sucesso!', 'success')
             return redirect(url_for('dashboard.index'))

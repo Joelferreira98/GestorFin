@@ -17,7 +17,11 @@
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Seu Plano Atual:</strong> 
-                {{ plans[current_plan]['name'] }}
+                {% if current_plan in plans %}
+                    {{ plans[current_plan]['name'] }}
+                {% else %}
+                    {{ current_plan }}
+                {% endif %}
                 {% if user_plan and user_plan.expires_at %}
                     - Expira em {{ user_plan.expires_at.strftime('%d/%m/%Y às %H:%M') }}
                 {% endif %}

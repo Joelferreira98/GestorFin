@@ -68,21 +68,25 @@
                             <i class="fas fa-bell me-1"></i>Lembretes
                         </a>
                     </li>
+                    {% if session.user_plan_name == 'Premium' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('ai_insights.index') }}">
                             <i class="fas fa-brain me-1"></i>IA Insights
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('plans.index') }}">
                             <i class="fas fa-star me-1"></i>Planos
                         </a>
                     </li>
+                    {% if session.user_plan_name == 'Premium' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('whatsapp.index') }}">
                             <i class="fab fa-whatsapp me-1"></i>WhatsApp
                         </a>
                     </li>
+                    {% endif %}
                     {% if session.is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.index') }}">

@@ -12,9 +12,23 @@ from PIL import Image
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
+def check_premium_plan():
+    """Verificar se o usuário tem plano Premium"""
+    from flask import session
+    user_plan = session.get('user_plan_name', 'Free')
+    if user_plan != 'Premium':
+        flash('Funcionalidade disponível apenas no plano Premium! Faça upgrade para acessar.', 'warning')
+        return redirect(url_for('plans.index'))
+    return None
+
 @whatsapp_bp.route('/')
 @login_required
 def index():
+    # Verificar se o usuário tem plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     instances = UserWhatsAppInstance.query.filter_by(user_id=user.id).all()
     messages = db.session.query(WhatsAppMessage, Client).join(Client).filter(
@@ -28,6 +42,11 @@ def index():
 @whatsapp_bp.route('/instances/add', methods=['POST'])
 @login_required
 def add_instance():
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     instance_name = request.form.get('instance_name')
@@ -120,6 +139,11 @@ def add_instance():
 @login_required
 def get_qrcode(instance_name):
     """Get QR Code for WhatsApp instance connection"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     # Check if user owns this instance
@@ -204,6 +228,11 @@ def get_qrcode(instance_name):
 @login_required
 def check_instance_status(instance_name):
     """Check the connection status of a WhatsApp instance"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     # Check if user owns this instance
@@ -275,6 +304,11 @@ def check_instance_status(instance_name):
 @login_required
 def logout_instance(instance_name):
     """Disconnect WhatsApp from instance"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     # Check if user owns this instance
@@ -328,6 +362,11 @@ def logout_instance(instance_name):
 @whatsapp_bp.route('/instances/delete/<int:instance_id>', methods=['POST'])
 @login_required
 def delete_instance(instance_id):
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     instance = UserWhatsAppInstance.query.filter_by(id=instance_id, user_id=user.id).first_or_404()
     

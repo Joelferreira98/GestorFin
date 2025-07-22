@@ -8,10 +8,24 @@ import logging
 
 ai_insights_bp = Blueprint('ai_insights', __name__)
 
+def check_premium_plan():
+    """Verificar se o usuário tem plano Premium"""
+    from flask import session
+    user_plan = session.get('user_plan_name', 'Free')
+    if user_plan != 'Premium':
+        flash('IA Insights disponível apenas no plano Premium! Faça upgrade para acessar.', 'warning')
+        return redirect(url_for('plans.index'))
+    return None
+
 @ai_insights_bp.route('/')
 @login_required
 def index():
     """Página principal de insights de IA"""
+    # Verificar se o usuário tem plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     if not financial_ai.is_enabled():
@@ -24,6 +38,11 @@ def index():
 @login_required
 def cash_flow_prediction():
     """API endpoint para predição de fluxo de caixa"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     months_ahead = request.args.get('months', 3, type=int)
     
@@ -34,6 +53,11 @@ def cash_flow_prediction():
 @login_required
 def client_risk_analysis():
     """API endpoint para análise de risco de clientes"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     analysis = financial_ai.get_client_risk_analysis(user.id)
@@ -43,6 +67,11 @@ def client_risk_analysis():
 @login_required
 def business_insights():
     """API endpoint para insights do negócio"""
+    # Verificar plano Premium
+    premium_check = check_premium_plan()
+    if premium_check:
+        return premium_check
+        
     user = get_current_user()
     
     insights = financial_ai.get_business_insights(user.id)
