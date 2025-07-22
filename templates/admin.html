@@ -782,10 +782,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
-let modalCurrentUserId = null;
-
 function showUserModal(userId, username, currentPlan, expiresAt) {
-    modalCurrentUserId = userId;
     document.getElementById('modalUserName').textContent = username;
     document.getElementById('modal_plan_name').value = currentPlan;
     

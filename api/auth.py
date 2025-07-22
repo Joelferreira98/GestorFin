@@ -55,16 +55,23 @@ def register():
         db.session.add(user)
         db.session.commit()
         
-        # Create default plan for user
+        # Create default Free plan for user
         user_plan = UserPlan(
             user_id=user.id,
-            plan_name='Basic',
-            max_clients=10,
-            max_receivables=50,
-            max_payables=50
+            plan_name='Free',
+            max_clients=5,
+            max_receivables=20,
+            max_payables=20
         )
         db.session.add(user_plan)
-        db.session.commit()
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Database error during user registration: {str(e)}")
+            flash('Erro interno. Tente novamente em alguns minutos.', 'error')
+            return render_template('auth/register.html')
         
         flash('Usuário criado com sucesso! Faça o login.', 'success')
         return redirect(url_for('auth.login'))
