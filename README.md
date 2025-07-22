@@ -12,22 +12,28 @@ O sistema está **PRONTO PARA PRODUÇÃO** com todas as funcionalidades implemen
 
 ### 🚀 Para Deploy na VPS
 
-1. **Teste o sistema localmente**:
+1. **Instalação inicial**:
 ```bash
-python test_evolution_api.py
+# Baixar e executar o script de instalação
+wget -O install.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/install.sh
+chmod +x install.sh
+sudo ./install.sh
 ```
 
-2. **Deploy na VPS**:
+2. **Atualização do sistema**:
 ```bash
-# Na VPS, puxar as últimas mudanças
-git pull origin main
+# Baixar e executar o script de atualização
+wget -O update.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/update.sh
+chmod +x update.sh
+sudo ./update.sh
+```
 
-# Reiniciar o serviço
-sudo systemctl restart financeiro
-sudo systemctl restart nginx
-
-# Verificar se está funcionando
-curl -X POST http://seu-ip:5004/auth/login -d "username=joel&password=Admin%402025%21"
+3. **Desinstalação (se necessário)**:
+```bash
+# Baixar e executar o script de desinstalação
+wget -O uninstall.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/uninstall.sh
+chmod +x uninstall.sh
+sudo ./uninstall.sh
 ```
 
 3. **Credenciais de Admin**:
