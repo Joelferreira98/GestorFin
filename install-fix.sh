@@ -279,5 +279,40 @@ if systemctl is-active --quiet nginx && systemctl is-active --quiet financeiro; 
     echo "• sudo journalctl -u financeiro -f"
     echo "• sudo tail -f /var/log/financeiro-max/app.log"
 else
-    error "Alguns serviços falharam ao iniciar. Verifique os logs."
+    error "Alguns serviços falharam ao iniciar."
+    echo
+    echo "🔍 DIAGNÓSTICO AUTOMÁTICO:"
+    
+    # Verificar status individual
+    if ! systemctl is-active --quiet nginx; then
+        echo "❌ Nginx falhou ao iniciar"
+        echo "Logs do Nginx:"
+        journalctl -u nginx -n 5 --no-pager || true
+    fi
+    
+    if ! systemctl is-active --quiet financeiro; then
+        echo "❌ FinanceiroMax falhou ao iniciar"
+        echo "Logs do FinanceiroMax:"
+        journalctl -u financeiro -n 5 --no-pager || true
+        
+        echo
+        echo "🧪 Executando teste de dependências..."
+        cd "$APP_DIR"
+        sudo -u "$APP_USER" ./venv/bin/python -c "
+import sys
+try:
+    from app import app
+    print('✓ Flask app carregado')
+except Exception as e:
+    print('❌ Erro ao carregar app:', e)
+" 2>/dev/null || echo "❌ Erro crítico na aplicação"
+    fi
+    
+    echo
+    echo "📋 SCRIPTS DE DIAGNÓSTICO DISPONÍVEIS:"
+    echo "• wget -O check-install.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/check-install.sh"
+    echo "  chmod +x check-install.sh && sudo ./check-install.sh"
+    echo
+    echo "• wget -O test-requirements.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/test-requirements.sh"
+    echo "  chmod +x test-requirements.sh && sudo ./test-requirements.sh"
 fi

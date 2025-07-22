@@ -1,165 +1,116 @@
 #!/bin/bash
 
-# Script para testar instalação de dependências
-# Resolve problemas de versões incompatíveis
+# FinanceiroMax - Teste de Dependências
+# Diagnóstico rápido para resolver falhas de inicialização
 
 set -e
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+APP_DIR="/opt/financeiro"
+APP_USER="financeiro"
 
-log() { echo -e "${GREEN}✓ $1${NC}"; }
-error() { echo -e "${RED}✗ $1${NC}"; }
-warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
+echo "=== TESTE DE DEPENDÊNCIAS PYTHON ==="
 
-echo "=== Teste de Dependências FinanceiroMax ==="
-
-# Criar ambiente virtual de teste
-TEST_DIR="/tmp/financeiro-test-$(date +%s)"
-mkdir -p "$TEST_DIR"
-cd "$TEST_DIR"
-
-log "Criando ambiente virtual de teste..."
-python3 -m venv test_env
-source test_env/bin/activate
-
-# Testar instalação de dependências individuais
-log "Testando instalação individual das dependências..."
-
-declare -a PACKAGES=(
-    "Flask>=3.0.0"
-    "Flask-SQLAlchemy>=3.1.0" 
-    "Flask-Login>=0.6.0"
-    "SQLAlchemy>=2.0.0"
-    "Werkzeug>=3.0.0"
-    "PyMySQL>=1.1.0"
-    "gunicorn>=21.0.0"
-    "Pillow>=10.0.0"
-    "requests>=2.31.0"
-    "python-dateutil>=2.8.0"
-    "qrcode[pil]>=7.4.0"
-    "PyJWT>=2.8.0"
-    "email-validator>=2.1.0"
-    "APScheduler>=3.10.0"
-    "openai>=1.3.0"
-    "phonenumbers>=8.13.0"
-    "python-dotenv>=1.0.0"
-    "cryptography"
-)
-
-declare -a FAILED_PACKAGES=()
-declare -a SUCCESS_PACKAGES=()
-
-for package in "${PACKAGES[@]}"; do
-    echo -n "Testando $package... "
-    if pip install "$package" >/dev/null 2>&1; then
-        echo -e "${GREEN}OK${NC}"
-        SUCCESS_PACKAGES+=("$package")
-    else
-        echo -e "${RED}FALHOU${NC}"
-        FAILED_PACKAGES+=("$package")
-    fi
-done
-
-echo
-echo "=== RESULTADO DO TESTE ==="
-echo "Pacotes instalados com sucesso: ${#SUCCESS_PACKAGES[@]}"
-echo "Pacotes com problemas: ${#FAILED_PACKAGES[@]}"
-
-if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
-    echo
-    warn "Pacotes que falharam:"
-    for package in "${FAILED_PACKAGES[@]}"; do
-        echo "  - $package"
-    done
-    
-    echo
-    echo "Criando requirements.txt com pacotes que funcionam..."
-    cat > requirements-working.txt << EOF
-# FinanceiroMax - Dependências que funcionam neste sistema
-EOF
-    
-    for package in "${SUCCESS_PACKAGES[@]}"; do
-        echo "$package" >> requirements-working.txt
-    done
-    
-    # Tentar versões alternativas para pacotes que falharam
-    echo
-    warn "Tentando versões alternativas para pacotes que falharam..."
-    
-    for failed_package in "${FAILED_PACKAGES[@]}"; do
-        base_package=$(echo "$failed_package" | cut -d'>' -f1 | cut -d'=' -f1)
-        echo -n "Tentando instalar $base_package sem restrição de versão... "
-        
-        if pip install "$base_package" >/dev/null 2>&1; then
-            echo -e "${GREEN}OK${NC}"
-            echo "$base_package" >> requirements-working.txt
-        else
-            echo -e "${RED}FALHOU${NC}"
-            echo "# $failed_package  # FALHOU - remova # se conseguir resolver" >> requirements-working.txt
-        fi
-    done
-    
-    echo
-    log "Arquivo 'requirements-working.txt' criado com dependências que funcionam"
-    echo "Copie este arquivo para seu projeto:"
-    echo "cp $TEST_DIR/requirements-working.txt /caminho/para/seu/projeto/"
-    
-else
-    log "Todas as dependências foram instaladas com sucesso!"
+if [[ ! -d "$APP_DIR" ]]; then
+    echo "❌ Diretório $APP_DIR não existe"
+    exit 1
 fi
 
-# Testar importação básica
-echo
-log "Testando importações básicas..."
+cd "$APP_DIR"
 
-python -c "
+if [[ ! -f "venv/bin/python" ]]; then
+    echo "❌ Ambiente virtual não existe"
+    exit 1
+fi
+
+echo "📦 Testando imports principais..."
+
+# Teste de imports
+sudo -u "$APP_USER" ./venv/bin/python -c "
+import sys
 try:
+    print('✓ Python:', sys.version.split()[0])
+    
     import flask
-    print('✓ Flask OK')
-except ImportError as e:
-    print(f'✗ Flask falhou: {e}')
-
-try:
-    import flask_sqlalchemy
-    print('✓ Flask-SQLAlchemy OK')
-except ImportError as e:
-    print(f'✗ Flask-SQLAlchemy falhou: {e}')
-
-try:
+    print('✓ Flask:', flask.__version__)
+    
+    import sqlalchemy
+    print('✓ SQLAlchemy:', sqlalchemy.__version__)
+    
     import pymysql
-    print('✓ PyMySQL OK')
+    print('✓ PyMySQL:', pymysql.__version__)
+    
+    import gunicorn
+    print('✓ Gunicorn:', gunicorn.__version__)
+    
+    print('✓ Todas as dependências principais OK')
+    
 except ImportError as e:
-    print(f'✗ PyMySQL falhou: {e}')
+    print('❌ Erro de import:', e)
+    sys.exit(1)
 "
 
-# Limpeza
-cd /tmp
-deactivate 2>/dev/null || true
+echo
+echo "🔧 Testando conexão com banco..."
+sudo -u "$APP_USER" ./venv/bin/python -c "
+import sys
+import os
+from dotenv import load_dotenv
+
+try:
+    load_dotenv()
+    db_url = os.getenv('DATABASE_URL')
+    if not db_url:
+        print('❌ DATABASE_URL não encontrada no .env')
+        sys.exit(1)
+    
+    print('✓ DATABASE_URL configurada')
+    
+    # Teste de conexão básica
+    import pymysql
+    from urllib.parse import urlparse
+    
+    parsed = urlparse(db_url.replace('mysql+pymysql://', 'mysql://'))
+    
+    conn = pymysql.connect(
+        host=parsed.hostname,
+        user=parsed.username,
+        password=parsed.password,
+        database=parsed.path[1:],
+        port=parsed.port or 3306
+    )
+    
+    cursor = conn.cursor()
+    cursor.execute('SELECT 1')
+    result = cursor.fetchone()
+    
+    if result[0] == 1:
+        print('✓ Conexão com MySQL OK')
+    
+    conn.close()
+    
+except Exception as e:
+    print('❌ Erro de conexão MySQL:', e)
+    sys.exit(1)
+"
 
 echo
-echo "=== RECOMENDAÇÕES ==="
+echo "🚀 Testando inicialização da aplicação..."
+sudo -u "$APP_USER" timeout 5s ./venv/bin/python -c "
+import sys
+try:
+    from app import app, db
+    print('✓ App Flask criado')
+    
+    with app.app_context():
+        db.create_all()
+        print('✓ Banco de dados inicializado')
+    
+    print('✓ Aplicação pronta para iniciar')
+    
+except Exception as e:
+    print('❌ Erro na inicialização:', e)
+    sys.exit(1)
+" 2>/dev/null || echo "⚠️ Timeout ou erro na inicialização"
 
-if [[ ${#FAILED_PACKAGES[@]} -eq 0 ]]; then
-    log "Sistema está pronto para instalação do FinanceiroMax!"
-    echo "Execute: ./install.sh"
-else
-    warn "Algumas dependências podem causar problemas"
-    echo "Recomendações:"
-    echo "1. Use o arquivo requirements-working.txt gerado"
-    echo "2. Ou use requirements-minimal.txt que tem versões mais flexíveis"
-    echo "3. Atualize o sistema: sudo apt update && sudo apt upgrade -y"
-    echo "4. Instale build tools: sudo apt install build-essential python3-dev"
-fi
-
-# Manter arquivo de resultado
-if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]] && [[ -f "$TEST_DIR/requirements-working.txt" ]]; then
-    cp "$TEST_DIR/requirements-working.txt" /tmp/requirements-working-$(date +%Y%m%d_%H%M%S).txt
-    echo "Backup do arquivo salvo em: /tmp/requirements-working-$(date +%Y%m%d_%H%M%S).txt"
-fi
-
-rm -rf "$TEST_DIR"
-
-echo "Teste concluído!"
+echo
+echo "=== TESTE CONCLUÍDO ==="

@@ -28,7 +28,31 @@ chmod +x update.sh
 sudo ./update.sh
 ```
 
-3. **Resolução de Conflitos Git**:
+3. **Correção de Problemas de Instalação**:
+```bash
+# Se a instalação falhar ou serviços não iniciarem
+wget -O install-fix.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/install-fix.sh
+chmod +x install-fix.sh
+sudo ./install-fix.sh
+```
+
+4. **Diagnóstico Completo**:
+```bash
+# Para diagnóstico detalhado de problemas
+wget -O check-install.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/check-install.sh
+chmod +x check-install.sh
+sudo ./check-install.sh
+```
+
+5. **Teste de Dependências**:
+```bash
+# Para verificar se todas as dependências estão OK
+wget -O test-requirements.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/test-requirements.sh
+chmod +x test-requirements.sh
+sudo ./test-requirements.sh
+```
+
+6. **Resolução de Conflitos Git**:
 ```bash
 # Se houver conflitos durante atualizações
 wget -O resolve-conflicts.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/resolve-conflicts.sh
@@ -36,7 +60,7 @@ chmod +x resolve-conflicts.sh
 sudo ./resolve-conflicts.sh
 ```
 
-4. **Desinstalação (se necessário)**:
+7. **Desinstalação (se necessário)**:
 ```bash
 # Baixar e executar o script de desinstalação
 wget -O uninstall.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/uninstall.sh
