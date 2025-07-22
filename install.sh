@@ -108,39 +108,89 @@ fi
 log "Atualizando sistema..."
 sudo apt update && sudo apt upgrade -y
 
+# Verificar se MySQL já está instalado
+MYSQL_INSTALLED=false
+if command -v mysql &> /dev/null && systemctl is-active --quiet mysql; then
+    log "MySQL já está instalado e rodando"
+    MYSQL_INSTALLED=true
+else
+    log "MySQL não encontrado ou não está rodando"
+fi
+
 # Instalar dependências básicas
 log "Instalando dependências básicas..."
-sudo apt install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    python3-dev \
-    mysql-server \
-    mysql-client \
-    nginx \
-    supervisor \
-    git \
-    curl \
-    wget \
-    unzip \
-    build-essential \
-    libmysqlclient-dev \
-    pkg-config \
-    ufw \
-    certbot \
+PACKAGES=(
+    python3
+    python3-pip
+    python3-venv
+    python3-dev
+    nginx
+    supervisor
+    git
+    curl
+    wget
+    unzip
+    build-essential
+    libmysqlclient-dev
+    pkg-config
+    ufw
+    certbot
     python3-certbot-nginx
+)
+
+# Adicionar MySQL apenas se não estiver instalado
+if [[ "$MYSQL_INSTALLED" == false ]]; then
+    PACKAGES+=(mysql-server mysql-client)
+fi
+
+sudo apt install -y "${PACKAGES[@]}"
 
 # Configurar MySQL
-log "Configurando MySQL..."
-sudo systemctl start mysql
-sudo systemctl enable mysql
+if [[ "$MYSQL_INSTALLED" == false ]]; then
+    log "Configurando MySQL (nova instalação)..."
+    sudo systemctl start mysql
+    sudo systemctl enable mysql
+    
+    # Solicitar configuração inicial do MySQL
+    log "MySQL foi instalado. Configure a senha do root:"
+    sudo mysql_secure_installation
+    
+    echo
+    log "Agora vamos criar o banco de dados e usuário..."
+fi
+
+# Obter credenciais do root para criar banco
+echo
+echo "=== CONFIGURAÇÃO DO BANCO DE DADOS ==="
+if [[ "$MYSQL_INSTALLED" == true ]]; then
+    info "MySQL já está instalado. Vamos criar o banco de dados e usuário."
+fi
+
+read -p "Digite a senha do usuário root do MySQL: " -s MYSQL_ROOT_PASSWORD
+echo
+
+# Testar conexão com root
+log "Testando conexão com MySQL..."
+if ! mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1;" &>/dev/null; then
+    error "Falha na autenticação MySQL. Verifique a senha do root."
+fi
 
 # Criar banco e usuário
 log "Criando banco de dados..."
-sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-sudo mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';"
-sudo mysql -e "FLUSH PRIVILEGES;"
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" << EOF
+CREATE DATABASE IF NOT EXISTS $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+
+# Verificar se a criação foi bem-sucedida
+log "Testando conexão com novo usuário..."
+if mysql -u "$DB_USER" -p"$DB_PASSWORD" -e "USE $DB_NAME; SELECT 1;" &>/dev/null; then
+    log "✓ Banco de dados e usuário criados com sucesso!"
+else
+    error "Falha ao criar banco de dados ou usuário"
+fi
 
 # Criar usuário do sistema
 log "Criando usuário do sistema..."
@@ -372,28 +422,62 @@ sudo ufw allow $APP_PORT
 log "Inicializando banco de dados..."
 cd $APP_DIR
 sudo -u $APP_USER $APP_DIR/venv/bin/python -c "
-from app import app, db
-with app.app_context():
-    db.create_all()
-    print('Banco de dados inicializado!')
+import sys
+try:
+    from app import app, db
+    with app.app_context():
+        db.create_all()
+        print('✓ Banco de dados inicializado!')
+except Exception as e:
+    print(f'Erro na inicialização do banco: {e}')
+    sys.exit(1)
 "
 
+if [[ $? -ne 0 ]]; then
+    error "Falha na inicialização do banco de dados"
+fi
+
 # Criar usuário admin inicial
-log "Criando usuário administrador..."
-read -p "Digite o email do administrador: " ADMIN_EMAIL
-read -p "Digite a senha do administrador: " -s ADMIN_PASSWORD
 echo
+echo "=== USUÁRIO ADMINISTRADOR ==="
+read -p "Digite o email do administrador: " ADMIN_EMAIL
+if [[ ! "$ADMIN_EMAIL" =~ ^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})$ ]]; then
+    error "Email inválido!"
+fi
 
+while true; do
+    read -p "Digite a senha do administrador (min 8 caracteres): " -s ADMIN_PASSWORD
+    echo
+    if [[ ${#ADMIN_PASSWORD} -lt 8 ]]; then
+        echo "Senha deve ter pelo menos 8 caracteres!"
+        continue
+    fi
+    read -p "Confirme a senha: " -s ADMIN_PASSWORD_CONFIRM
+    echo
+    if [[ "$ADMIN_PASSWORD" == "$ADMIN_PASSWORD_CONFIRM" ]]; then
+        break
+    else
+        echo "Senhas não coincidem! Tente novamente."
+    fi
+done
+
+log "Criando usuário administrador..."
 sudo -u $APP_USER $APP_DIR/venv/bin/python -c "
-from app import app, db
-from models import User, UserPlan
-from werkzeug.security import generate_password_hash
-from datetime import datetime
+import sys
+try:
+    from app import app, db
+    from models import User, UserPlan
+    from werkzeug.security import generate_password_hash
+    from datetime import datetime
 
-with app.app_context():
-    # Criar usuário admin
-    admin = User.query.filter_by(email='$ADMIN_EMAIL').first()
-    if not admin:
+    with app.app_context():
+        # Verificar se admin já existe
+        admin = User.query.filter_by(email='$ADMIN_EMAIL').first()
+        if admin:
+            print('✓ Usuário administrador já existe!')
+            sys.exit(0)
+        
+        # Criar usuário admin
         admin = User(
             username='admin',
             email='$ADMIN_EMAIL',
@@ -403,6 +487,7 @@ with app.app_context():
             created_at=datetime.utcnow()
         )
         db.session.add(admin)
+        db.session.flush()  # Para obter o ID
         
         # Criar plano Premium para o admin
         admin_plan = UserPlan(
@@ -414,10 +499,16 @@ with app.app_context():
         db.session.add(admin_plan)
         
         db.session.commit()
-        print('Usuário administrador criado!')
-    else:
-        print('Usuário administrador já existe!')
+        print('✓ Usuário administrador criado com sucesso!')
+        
+except Exception as e:
+    print(f'Erro ao criar administrador: {e}')
+    sys.exit(1)
 "
+
+if [[ $? -ne 0 ]]; then
+    error "Falha ao criar usuário administrador"
+fi
 
 # Iniciar serviços
 log "Iniciando serviços..."

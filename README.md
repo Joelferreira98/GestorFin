@@ -55,24 +55,33 @@ Sistema completo de gestão financeira com inteligência artificial, integraçõ
 
 ### Instalação Automatizada (VPS)
 
-1. **Clone o repositório**:
+#### Opção 1: Instalação Completa
+Para servidores novos sem MySQL:
+
 ```bash
 git clone <repository-url>
 cd financeiro-max
-```
-
-2. **Execute o instalador**:
-```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-3. **Siga as instruções interativas**:
-   - Configure usuário do sistema
-   - Escolha porta da aplicação
-   - Configure domínio/IP
-   - Defina senha do MySQL
-   - Configure SSL (opcional)
+#### Opção 2: Instalação Rápida
+Para servidores que já possuem MySQL configurado:
+
+```bash
+git clone <repository-url>
+cd financeiro-max
+chmod +x install-quick.sh
+./install-quick.sh
+```
+
+#### Configuração Interativa:
+- **Usuário do sistema**: Nome do usuário Linux
+- **Porta da aplicação**: Porta interna (padrão: 5000)
+- **Domínio/IP**: Endereço público do servidor
+- **Credenciais MySQL**: Senha root e dados do banco
+- **Administrador**: Email e senha do primeiro usuário admin
+- **SSL**: Certificado gratuito via Let's Encrypt (opcional)
 
 ### Instalação Manual
 
@@ -83,7 +92,16 @@ sudo apt install -y python3 python3-pip python3-venv mysql-server nginx supervis
 ```
 
 #### 2. Configuração do MySQL
+
+**Para MySQL existente:**
 ```bash
+python3 mysql_setup.py
+```
+
+**Para nova instalação do MySQL:**
+```bash
+sudo apt install mysql-server
+sudo mysql_secure_installation
 python3 mysql_setup.py
 ```
 
@@ -272,19 +290,28 @@ sudo journalctl --vacuum-time=30d
 ## 🛡️ Segurança
 
 ### Implementações de Segurança
-- **Autenticação**: Sistema de sessões Flask
-- **Autorização**: Controle baseado em roles
-- **Validação**: Sanitização de inputs
-- **CSRF Protection**: Proteção contra ataques CSRF
-- **SQL Injection**: ORM SQLAlchemy protege contra SQLi
+- **Autenticação**: Sistema de sessões Flask seguro
+- **Autorização**: Controle baseado em roles (admin/usuário)
+- **Validação**: Sanitização rigorosa de todos os inputs
+- **CSRF Protection**: Proteção automática contra ataques CSRF
+- **SQL Injection**: ORM SQLAlchemy previne injeções SQL
 - **XSS Protection**: Templates Jinja2 com escape automático
+- **Firewall**: Configuração automática via UFW
+- **SSL/TLS**: HTTPS obrigatório em produção
 
-### Recomendações
-- Use HTTPS em produção (script configura automaticamente)
-- Mantenha senhas fortes para banco de dados
-- Atualize regularmente as dependências
-- Configure firewall adequadamente
-- Faça backups regulares
+### Configurações de Segurança Automáticas
+- **Firewall UFW**: Liberação apenas das portas necessárias (SSH, HTTP, HTTPS)
+- **Headers de Segurança**: X-Frame-Options, X-Content-Type-Options, etc.
+- **Cookies Seguros**: HttpOnly, Secure, SameSite configurados
+- **Rate Limiting**: Proteção contra força bruta via Nginx
+- **Backup Criptografado**: Backups automáticos com rotação
+
+### Recomendações Adicionais
+- **Senhas Fortes**: Mínimo 8 caracteres para todas as contas
+- **Atualizações**: Sistema de atualizações automáticas de segurança
+- **Monitoramento**: Logs de segurança e alertas automáticos
+- **Backup 3-2-1**: 3 cópias, 2 mídias, 1 externa
+- **Acesso SSH**: Use chaves SSH em vez de senhas quando possível
 
 ## 📈 Performance
 
