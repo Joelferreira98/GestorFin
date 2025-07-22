@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # FinanceiroMax - Script de Instalação Automatizada
-# Versão: 1.4 - Método git clone com diretório temporário
+# Versão: 1.5 - Nginx simplificado sem default_server
 # Autor: Sistema FinanceiroMax
 # Data: Janeiro 2025
 # Repositório: https://github.com/Joelferreira98/GestorFin
@@ -393,16 +393,17 @@ EOF
 
 # Configurar Nginx
 log "Configurando Nginx..."
-sudo tee /etc/nginx/sites-available/financeiro-max > /dev/null << EOF
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
 
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+# Remover configurações que podem causar conflito
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/sites-enabled/financeiro-max
+sudo rm -f /etc/nginx/sites-available/financeiro-max
+
+# Criar configuração simplificada
+sudo tee /etc/nginx/sites-available/financeiro > /dev/null << EOF
+server {
+    listen 80;
+    server_name _;
 
     # Static files
     location /static/ {
@@ -426,34 +427,23 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_redirect off;
-        proxy_buffering off;
         
         # Timeouts
-        proxy_connect_timeout 300;
-        proxy_send_timeout 300;
-        proxy_read_timeout 300;
-        send_timeout 300;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
         
         # File upload size
         client_max_body_size 10M;
-    }
-
-    # Health check
-    location /health {
-        access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
     }
 }
 EOF
 
 # Ativar site
-sudo ln -sf /etc/nginx/sites-available/financeiro-max /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
+sudo ln -sf /etc/nginx/sites-available/financeiro /etc/nginx/sites-enabled/financeiro
 
 # Testar configuração do Nginx
-sudo nginx -t
+sudo nginx -t || error "Erro na configuração do Nginx"
 
 # Configurar firewall
 log "Configurando firewall..."

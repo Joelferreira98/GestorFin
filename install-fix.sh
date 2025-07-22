@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # FinanceiroMax - Script de Correção/Instalação
-# Versão: 1.4 - Método git clone com diretório temporário
+# Versão: 1.5 - Nginx simplificado sem default_server
 # Repositório: https://github.com/Joelferreira98/GestorFin
 
 set -e
@@ -197,29 +197,32 @@ if ! command -v nginx &>/dev/null; then
     apt-get install -y nginx
 fi
 
-# Remover configuração padrão e criar nova
+# Remover todas as configurações que podem causar conflito
 rm -f /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/financeiro-max
+rm -f /etc/nginx/sites-enabled/financeiro
+rm -f /etc/nginx/sites-available/financeiro-max
+rm -f /etc/nginx/sites-available/financeiro
 
+# Criar configuração simplificada sem default_server
 tee /etc/nginx/sites-available/financeiro > /dev/null << EOF
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
+    listen 80;
     server_name _;
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-    add_header X-XSS-Protection "1; mode=block";
-
-    # Logs
-    access_log /var/log/nginx/financeiro_access.log;
-    error_log /var/log/nginx/financeiro_error.log;
 
     # Static files
     location /static/ {
         alias $APP_DIR/static/;
-        expires 1y;
+        expires 30d;
         add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Uploads
+    location /uploads/ {
+        alias $APP_DIR/static/uploads/;
+        expires 7d;
+        add_header Cache-Control "public";
     }
 
     # Main application
@@ -235,18 +238,8 @@ server {
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
         
-        # Buffer settings
-        proxy_buffering on;
-        proxy_buffer_size 128k;
-        proxy_buffers 4 256k;
-        proxy_busy_buffers_size 256k;
-    }
-
-    # Health check
-    location /health {
-        access_log off;
-        return 200 "OK";
-        add_header Content-Type text/plain;
+        # File upload size
+        client_max_body_size 10M;
     }
 }
 EOF

@@ -141,6 +141,19 @@ if [[ -f "requirements.production.txt" ]] || [[ -f "requirements.txt" ]]; then
     fi
 fi
 
+# Verificar e corrigir configuração Nginx se necessário
+log "Verificando configuração Nginx..."
+if ! nginx -t &>/dev/null; then
+    warn "Configuração Nginx com problema, corrigindo..."
+    
+    # Remover configurações problemáticas
+    rm -f /etc/nginx/sites-enabled/default
+    rm -f /etc/nginx/sites-enabled/financeiro-max
+    
+    # Verificar novamente
+    nginx -t || warn "Problema persiste no Nginx"
+fi
+
 # Reiniciar serviços
 log "Reiniciando serviços..."
 systemctl daemon-reload
