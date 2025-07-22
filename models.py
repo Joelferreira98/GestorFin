@@ -220,4 +220,11 @@ class SystemSettings(db.Model):
     evolution_webhook_url = db.Column(db.String(200))
     evolution_enabled = db.Column(db.Boolean, default=False)
     
+    # AI Settings
+    ai_enabled = db.Column(db.Boolean, default=False)
+    ai_model = db.Column(db.String(50), default='gpt-4o')
+    ai_temperature = db.Column(db.Float, default=0.3)
+    ai_max_tokens = db.Column(db.Integer, default=2000)
+    prediction_months = db.Column(db.Integer, default=3)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

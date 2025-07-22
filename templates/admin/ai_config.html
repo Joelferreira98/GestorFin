@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Configuração de IA - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-brain me-2 text-primary"></i>Configuração de IA Financeira
+        </h1>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-info" onclick="testAI()">
+                <i class="fas fa-vial me-1"></i>Testar IA
+            </button>
+            <div class="badge bg-{% if ai_enabled %}success{% else %}warning{% endif %} fs-6 p-2">
+                <i class="fas fa-{% if ai_enabled %}check{% else %}exclamation-triangle{% endif %} me-1"></i>
+                {% if ai_enabled %}IA Ativa{% else %}IA Inativa{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Status da API -->
+    <div class="alert {% if ai_enabled %}alert-success{% else %}alert-warning{% endif %}" role="alert">
+        <i class="fas fa-{% if ai_enabled %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+        {% if ai_enabled %}
+        <strong>IA Configurada!</strong> A API da OpenAI está conectada e funcionando. Os usuários podem acessar insights avançados.
+        {% else %}
+        <strong>IA não configurada!</strong> Configure a OPENAI_API_KEY nas variáveis de ambiente para habilitar funcionalidades de IA.
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <!-- Configurações Principais -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-cogs me-2"></i>Configurações da IA
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('ai_insights.update_config') }}">
+                        <!-- Status Geral -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="ai_enabled" name="ai_enabled" {% if settings.ai_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="ai_enabled">
+                                        <strong>Habilitar Sistema de IA Financeira</strong>
+                                        <div class="form-text">Ativar análises inteligentes e predições para todos os usuários</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Configurações do Modelo -->
+                        <div class="mb-4">
+                            <label for="ai_model" class="form-label">
+                                <i class="fas fa-microchip me-2"></i>Modelo de IA
+                            </label>
+                            <select class="form-select" id="ai_model" name="ai_model">
+                                <option value="gpt-4o" {% if settings.ai_model == 'gpt-4o' %}selected{% endif %}>GPT-4o (Recomendado)</option>
+                                <option value="gpt-4o-mini" {% if settings.ai_model == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini (Mais rápido)</option>
+                                <option value="gpt-4-turbo" {% if settings.ai_model == 'gpt-4-turbo' %}selected{% endif %}>GPT-4 Turbo</option>
+                            </select>
+                            <div class="form-text">GPT-4o oferece a melhor qualidade para análises financeiras</div>
+                        </div>
+
+                        <!-- Configurações de Temperatura -->
+                        <div class="mb-4">
+                            <label for="ai_temperature" class="form-label">
+                                <i class="fas fa-thermometer-half me-2"></i>Criatividade (Temperature: {{ settings.ai_temperature or 0.3 }})
+                            </label>
+                            <input type="range" class="form-range" id="ai_temperature" name="ai_temperature" 
+                                   min="0" max="1" step="0.1" value="{{ settings.ai_temperature or 0.3 }}"
+                                   oninput="document.getElementById('tempValue').textContent = this.value">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Mais Preciso (0.0)</small>
+                                <span id="tempValue" class="badge bg-primary">{{ settings.ai_temperature or 0.3 }}</span>
+                                <small class="text-muted">Mais Criativo (1.0)</small>
+                            </div>
+                            <div class="form-text">Valores baixos (0.2-0.4) são recomendados para análises financeiras</div>
+                        </div>
+
+                        <!-- Configurações de Tokens -->
+                        <div class="mb-4">
+                            <label for="ai_max_tokens" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>Máximo de Tokens
+                            </label>
+                            <input type="number" class="form-control" id="ai_max_tokens" name="ai_max_tokens" 
+                                   value="{{ settings.ai_max_tokens or 2000 }}" min="500" max="4000">
+                            <div class="form-text">Controla o tamanho máximo das respostas da IA (2000 recomendado)</div>
+                        </div>
+
+                        <!-- Configurações de Predição -->
+                        <div class="mb-4">
+                            <label for="prediction_months" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>Meses para Predição
+                            </label>
+                            <input type="number" class="form-control" id="prediction_months" name="prediction_months" 
+                                   value="{{ settings.prediction_months or 3 }}" min="1" max="12">
+                            <div class="form-text">Quantos meses à frente a IA deve prever (padrão: 3 meses)</div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Salvar Configurações
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
+                                <i class="fas fa-undo me-1"></i>Restaurar Padrão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status e Informações -->
+        <div class="col-lg-4">
+            <!-- Status da API -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-{% if ai_enabled %}success{% else %}warning{% endif %}">
+                        <i class="fas fa-info-circle me-2"></i>Status da API
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="badge bg-{% if ai_enabled %}success{% else %}secondary{% endif %} me-2">
+                            <i class="fas fa-{% if ai_enabled %}check{% else %}times{% endif %}"></i>
+                        </div>
+                        <div>
+                            <strong>OpenAI API</strong>
+                            <div class="text-muted small">{% if ai_enabled %}Conectada{% else %}Não configurada{% endif %}</div>
+                        </div>
+                    </div>
+                    
+                    {% if ai_enabled %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="badge bg-info me-2">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <div>
+                            <strong>{{ settings.ai_model or 'gpt-4o' }}</strong>
+                            <div class="text-muted small">Modelo em uso</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="badge bg-{% if settings.ai_enabled %}success{% else %}secondary{% endif %} me-2">
+                            <i class="fas fa-{% if settings.ai_enabled %}play{% else %}pause{% endif %}"></i>
+                        </div>
+                        <div>
+                            <strong>Sistema {% if settings.ai_enabled %}Ativo{% else %}Inativo{% endif %}</strong>
+                            <div class="text-muted small">Status administrativo</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recursos Disponíveis -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list me-2"></i>Recursos de IA
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            <strong>Predição de Fluxo de Caixa</strong>
+                            <div class="text-muted small">Previsões até 12 meses à frente</div>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            <strong>Análise de Risco de Clientes</strong>
+                            <div class="text-muted small">Identificação de inadimplência</div>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-lightbulb text-success me-2"></i>
+                            <strong>Insights do Negócio</strong>
+                            <div class="text-muted small">Recomendações estratégicas</div>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-file-alt text-info me-2"></i>
+                            <strong>Relatórios Inteligentes</strong>
+                            <div class="text-muted small">Análises completas em JSON</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Configuração da API Key -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-key me-2"></i>Configuração da API Key
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Como configurar:</strong><br>
+                            1. Obtenha uma API key em <a href="https://platform.openai.com" target="_blank">platform.openai.com</a><br>
+                            2. Configure a variável de ambiente <code>OPENAI_API_KEY</code><br>
+                            3. Reinicie o sistema para aplicar
+                        </small>
+                    </div>
+                    
+                    {% if not ai_enabled %}
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            A API key não está configurada. Configure para habilitar recursos de IA.
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function testAI() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Testando...';
+    
+    fetch('/ai_insights/admin/test_ai', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+        } else {
+            alert('❌ ' + data.message);
+        }
+        
+        button.disabled = false;
+        button.innerHTML = originalText;
+    })
+    .catch(error => {
+        alert('❌ Erro ao testar: ' + error.message);
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+
+function resetToDefaults() {
+    if (confirm('Deseja restaurar as configurações padrão da IA?')) {
+        document.getElementById('ai_enabled').checked = true;
+        document.getElementById('ai_model').value = 'gpt-4o';
+        document.getElementById('ai_temperature').value = 0.3;
+        document.getElementById('tempValue').textContent = '0.3';
+        document.getElementById('ai_max_tokens').value = 2000;
+        document.getElementById('prediction_months').value = 3;
+    }
+}
+
+// Update temperature display
+document.getElementById('ai_temperature').addEventListener('input', function() {
+    document.getElementById('tempValue').textContent = this.value;
+});
+</script>
+{% endblock %}

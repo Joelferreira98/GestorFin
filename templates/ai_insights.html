@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}Insights de IA - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-brain me-2 text-primary"></i>Insights Financeiros com IA
+        </h1>
+        <div class="d-flex gap-2">
+            {% if ai_enabled %}
+            <button type="button" class="btn btn-primary" onclick="generateFullReport()">
+                <i class="fas fa-file-alt me-1"></i>Relatório Completo
+            </button>
+            {% else %}
+            <div class="badge bg-warning fs-6 p-2">
+                <i class="fas fa-exclamation-triangle me-1"></i>IA não configurada
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not ai_enabled %}
+    <!-- Alert quando IA não está configurada -->
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>IA não configurada!</strong> Solicite ao administrador para configurar a API key da OpenAI no painel administrativo para habilitar os insights avançados.
+    </div>
+    {% endif %}
+
+    {% if ai_enabled %}
+    <div class="row">
+        <!-- Predição de Fluxo de Caixa -->
+        <div class="col-xl-12 col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Predição de Fluxo de Caixa
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <select class="form-select form-select-sm" id="monthsSelect" onchange="updatePrediction()">
+                            <option value="3">Próximos 3 meses</option>
+                            <option value="6">Próximos 6 meses</option>
+                            <option value="12">Próximo ano</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="cashFlowPrediction">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando predição...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análise de Risco de Clientes e Insights do Negócio -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Análise de Risco de Clientes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="clientRiskAnalysis">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Analisando riscos...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-lightbulb me-2"></i>Insights do Negócio
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="businessInsights">
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Gerando insights...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Como funciona -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Como Funciona a IA Financeira
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-database fa-3x text-primary mb-3"></i>
+                                <h5>1. Análise de Dados</h5>
+                                <p class="text-muted">A IA analisa seu histórico financeiro, padrões de pagamento e dados dos clientes.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-brain fa-3x text-success mb-3"></i>
+                                <h5>2. Inteligência Avançada</h5>
+                                <p class="text-muted">Algoritmos de machine learning identificam tendências e geram predições.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
+                                <h5>3. Insights Acionáveis</h5>
+                                <p class="text-muted">Receba recomendações práticas para otimizar seu negócio.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if ai_enabled %}
+    // Carregar todas as análises iniciais
+    loadCashFlowPrediction();
+    loadClientRiskAnalysis();
+    loadBusinessInsights();
+    {% endif %}
+});
+
+function loadCashFlowPrediction() {
+    const months = document.getElementById('monthsSelect').value;
+    
+    fetch(`/ai_insights/cash_flow_prediction?months=${months}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('cashFlowPrediction').innerHTML = 
+                    `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+            
+            let html = '';
+            
+            // Predições mensais
+            if (data.predicao_mensal && data.predicao_mensal.length > 0) {
+                html += '<div class="table-responsive">';
+                html += '<table class="table table-striped">';
+                html += '<thead><tr><th>Mês</th><th>Receita Prevista</th><th>Gastos Previstos</th><th>Saldo Previsto</th></tr></thead>';
+                html += '<tbody>';
+                
+                data.predicao_mensal.forEach(item => {
+                    const saldoClass = item.saldo_previsto >= 0 ? 'text-success' : 'text-danger';
+                    html += `<tr>
+                        <td>${item.mes}</td>
+                        <td class="text-success">R$ ${item.receita_prevista.toFixed(2)}</td>
+                        <td class="text-danger">R$ ${item.gastos_previstos.toFixed(2)}</td>
+                        <td class="${saldoClass}">R$ ${item.saldo_previsto.toFixed(2)}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table></div>';
+            }
+            
+            // Tendências
+            if (data.tendencias && data.tendencias.length > 0) {
+                html += '<div class="mt-3"><h6>Tendências Identificadas:</h6><ul>';
+                data.tendencias.forEach(trend => html += `<li>${trend}</li>`);
+                html += '</ul></div>';
+            }
+            
+            // Recomendações
+            if (data.recomendacoes && data.recomendacoes.length > 0) {
+                html += '<div class="mt-3"><h6>Recomendações:</h6><ul>';
+                data.recomendacoes.forEach(rec => html += `<li class="text-primary">${rec}</li>`);
+                html += '</ul></div>';
+            }
+            
+            // Alertas
+            if (data.alertas && data.alertas.length > 0) {
+                html += '<div class="mt-3"><h6>Alertas:</h6>';
+                data.alertas.forEach(alert => html += `<div class="alert alert-warning small">${alert}</div>`);
+                html += '</div>';
+            }
+            
+            // Resumo
+            if (data.resumo) {
+                html += `<div class="mt-3"><div class="alert alert-info"><strong>Resumo:</strong> ${data.resumo}</div></div>`;
+            }
+            
+            document.getElementById('cashFlowPrediction').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('cashFlowPrediction').innerHTML = 
+                `<div class="alert alert-danger">Erro ao carregar predição: ${error.message}</div>`;
+        });
+}
+
+function loadClientRiskAnalysis() {
+    fetch('/ai_insights/client_risk_analysis')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('clientRiskAnalysis').innerHTML = 
+                    `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+            
+            let html = '';
+            
+            // Clientes alto risco
+            if (data.clientes_alto_risco && data.clientes_alto_risco.length > 0) {
+                html += '<div class="mb-3"><h6 class="text-danger">Alto Risco:</h6>';
+                data.clientes_alto_risco.forEach(client => {
+                    html += `<div class="alert alert-danger small">
+                        <strong>${client.nome}</strong> (${(client.probabilidade * 100).toFixed(0)}%)<br>
+                        <small>${client.motivo}</small>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Clientes médio risco
+            if (data.clientes_medio_risco && data.clientes_medio_risco.length > 0) {
+                html += '<div class="mb-3"><h6 class="text-warning">Médio Risco:</h6>';
+                data.clientes_medio_risco.forEach(client => {
+                    html += `<div class="alert alert-warning small">
+                        <strong>${client.nome}</strong> (${(client.probabilidade * 100).toFixed(0)}%)
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Clientes baixo risco
+            if (data.clientes_baixo_risco && data.clientes_baixo_risco.length > 0) {
+                html += '<div class="mb-3"><h6 class="text-success">Baixo Risco:</h6>';
+                html += `<div class="alert alert-success small">${data.clientes_baixo_risco.length} clientes com baixo risco de inadimplência</div>`;
+            }
+            
+            if (html === '') {
+                html = '<div class="text-muted">Nenhum dado de risco disponível</div>';
+            }
+            
+            document.getElementById('clientRiskAnalysis').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('clientRiskAnalysis').innerHTML = 
+                `<div class="alert alert-danger">Erro ao carregar análise: ${error.message}</div>`;
+        });
+}
+
+function loadBusinessInsights() {
+    fetch('/ai_insights/business_insights')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('businessInsights').innerHTML = 
+                    `<div class="alert alert-danger">${data.error}</div>`;
+                return;
+            }
+            
+            let html = '';
+            
+            // Score de saúde financeira
+            if (data.score_saude_financeira) {
+                const scoreClass = data.score_saude_financeira >= 80 ? 'success' : 
+                                 data.score_saude_financeira >= 60 ? 'warning' : 'danger';
+                html += `<div class="mb-3">
+                    <h6>Score de Saúde Financeira:</h6>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-${scoreClass}" style="width: ${data.score_saude_financeira}%">
+                            ${data.score_saude_financeira}%
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            // Indicadores de performance
+            if (data.indicadores_performance) {
+                html += '<div class="mb-3"><h6>Indicadores:</h6>';
+                const ind = data.indicadores_performance;
+                if (ind.ticket_medio) html += `<small>• Ticket Médio: R$ ${ind.ticket_medio.toFixed(2)}</small><br>`;
+                if (ind.taxa_inadimplencia) html += `<small>• Taxa de Inadimplência: ${(ind.taxa_inadimplencia * 100).toFixed(1)}%</small><br>`;
+                if (ind.crescimento_mensal) html += `<small>• Crescimento Mensal: ${(ind.crescimento_mensal * 100).toFixed(1)}%</small><br>`;
+                html += '</div>';
+            }
+            
+            // Oportunidades de melhoria
+            if (data.oportunidades_melhoria && data.oportunidades_melhoria.length > 0) {
+                html += '<div class="mb-3"><h6>Oportunidades:</h6><ul>';
+                data.oportunidades_melhoria.slice(0, 3).forEach(opp => {
+                    html += `<li class="small text-success">${opp}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            // Recomendações estratégicas
+            if (data.recomendacoes_estrategicas && data.recomendacoes_estrategicas.length > 0) {
+                html += '<div class="mb-3"><h6>Recomendações:</h6><ul>';
+                data.recomendacoes_estrategicas.slice(0, 2).forEach(rec => {
+                    html += `<li class="small text-primary">${rec}</li>`;
+                });
+                html += '</ul></div>';
+            }
+            
+            if (html === '') {
+                html = '<div class="text-muted">Gerando insights...</div>';
+            }
+            
+            document.getElementById('businessInsights').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('businessInsights').innerHTML = 
+                `<div class="alert alert-danger">Erro ao carregar insights: ${error.message}</div>`;
+        });
+}
+
+function updatePrediction() {
+    document.getElementById('cashFlowPrediction').innerHTML = 
+        '<div class="d-flex justify-content-center"><div class="spinner-border text-primary" role="status"></div></div>';
+    loadCashFlowPrediction();
+}
+
+function generateFullReport() {
+    const button = event.target;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+    
+    fetch('/ai_insights/generate_report')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erro ao gerar relatório: ' + data.error);
+            } else {
+                // Criar e baixar arquivo JSON com o relatório
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `relatorio-ia-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }
+            
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-file-alt me-1"></i>Relatório Completo';
+        })
+        .catch(error => {
+            alert('Erro ao gerar relatório: ' + error.message);
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-file-alt me-1"></i>Relatório Completo';
+        });
+}
+</script>
+{% endblock %}
