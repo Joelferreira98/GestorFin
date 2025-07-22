@@ -131,6 +131,15 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### Janeiro 2025
+- **Sistema de Deployment para VPS Implementado**: Scripts completos de instalação e configuração
+  - Script `install.sh` para instalação automatizada em VPS
+  - Suporte completo ao MySQL com pooling de conexões otimizado
+  - Configuração automática do Nginx com SSL/HTTPS via Let's Encrypt
+  - Sistema de configuração flexível via arquivo `config.py`
+  - Scripts de backup automático e monitoramento de serviços
+  - Documentação completa no `README.md` com guias de instalação
+  - Sistema de logs estruturado e rotação automática
+  - Configuração de firewall e segurança automatizada
 - **Sistema de IA Financeira Implementado**: Integração completa com OpenAI para análises preditivas
   - Configuração via painel administrativo (não variáveis de ambiente)
   - Predições de fluxo de caixa até 12 meses

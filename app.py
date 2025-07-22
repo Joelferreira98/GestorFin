@@ -5,9 +5,14 @@ from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from config import get_config
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+log_level = os.environ.get('LOG_LEVEL', 'DEBUG')
+logging.basicConfig(
+    level=getattr(logging, log_level.upper()),
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s'
+)
 
 class Base(DeclarativeBase):
     pass
@@ -16,25 +21,16 @@ db = SQLAlchemy(model_class=Base)
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+
+# Load configuration
+config_class = get_config()
+app.config.from_object(config_class)
+
+# Set secret key explicitly if not set in config
+if not app.config.get('SECRET_KEY'):
+    app.config['SECRET_KEY'] = os.environ.get("SESSION_SECRET")
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
-# Configure the database
-database_url = os.environ.get("DATABASE_URL", "sqlite:///financeiro.db")
-
-# Handle PostgreSQL SSL configuration
-if database_url.startswith("postgresql://"):
-    database_url = database_url.replace("postgresql://", "postgresql+psycopg2://")
-
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-    "connect_args": {
-        "sslmode": "require"  # Required SSL for PostgreSQL
-    } if database_url.startswith("postgresql") else {}
-}
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the app with the extension
 db.init_app(app)
