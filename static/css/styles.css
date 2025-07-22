@@ -78,18 +78,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
-.demo-credentials {
-    background: var(--light-color);
-    border-radius: var(--border-radius);
-    padding: 1rem;
-    border-left: 4px solid var(--info-color);
-}
 
-.demo-item {
-    font-size: 0.875rem;
-    margin: 0.25rem 0;
-    font-family: monospace;
-}
 
 .plan-info {
     background: var(--light-color);
