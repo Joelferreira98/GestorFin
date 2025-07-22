@@ -40,7 +40,7 @@ class Config:
     UPLOAD_FOLDER = 'static/uploads'
     
     # Security
-    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
+    SESSION_COOKIE_SECURE = False  # Forçar False para HTTP
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = 3600 * 24 * 7  # 1 week

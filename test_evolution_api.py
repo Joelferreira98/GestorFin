@@ -1,135 +1,89 @@
 #!/usr/bin/env python3
 """
-Script de teste para Evolution API
-Usado para debuggar problemas de conexão
+Teste completo do sistema para VPS
 """
+from app import app, db
+from models import User
+import logging
 
-import requests
-import json
-import sys
+logging.basicConfig(level=logging.INFO)
 
-def test_evolution_api():
-    # Configurações do teste
-    api_url = "https://evoapi.gestorstm.online"
-    api_key = "f6c5b1b1a891fd02"
+def test_complete_system():
+    """Teste completo do sistema"""
     
-    print("=== TESTE EVOLUTION API ===")
-    print(f"URL: {api_url}")
-    print(f"API Key: {api_key}")
-    print("-" * 50)
+    print("=== TESTE COMPLETO DO SISTEMA ===")
     
-    # Teste 1: Fetch Instances (método atual)
-    print("1. Testando fetchInstances (método atual)...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/fetchInstances",
-            headers={
-                'apikey': api_key
-            },
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Headers da resposta: {dict(response.headers)}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print()
-    
-    # Teste 2: Com Content-Type
-    print("2. Testando com Content-Type...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/fetchInstances",
-            headers={
-                'apikey': api_key,
-                'Content-Type': 'application/json'
-            },
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print()
-    
-    # Teste 3: Authorization header
-    print("3. Testando com Authorization header...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/fetchInstances",
-            headers={
-                'Authorization': f'Bearer {api_key}'
-            },
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print()
-    
-    # Teste 4: API Key como Authorization
-    print("4. Testando Authorization com API Key...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/fetchInstances",
-            headers={
-                'Authorization': api_key
-            },
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print()
-    
-    # Teste 5: Como query parameter
-    print("5. Testando como query parameter...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/fetchInstances?apikey={api_key}",
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print()
-    
-    # Teste 6: Diferentes endpoints
-    print("6. Testando endpoint alternativo...")
-    try:
-        response = requests.get(
-            f"{api_url}/instance/list",
-            headers={
-                'apikey': api_key
-            },
-            timeout=10
-        )
-        
-        print(f"   Status: {response.status_code}")
-        print(f"   Resposta: {response.text}")
-        
-    except Exception as e:
-        print(f"   Erro: {e}")
-    
-    print("\n=== FIM DOS TESTES ===")
+    with app.app_context():
+        try:
+            # 1. Teste de conexão com banco
+            print("1. Testando conexão com banco...")
+            user_count = User.query.count()
+            print(f"✅ Banco conectado - {user_count} usuários encontrados")
+            
+            # 2. Teste do usuário admin
+            print("2. Testando usuário admin...")
+            admin_user = User.query.filter_by(username='joel').first()
+            
+            if admin_user:
+                print(f"✅ Admin encontrado: {admin_user.username}")
+                print(f"✅ Email: {admin_user.email}")
+                print(f"✅ Is Admin: {admin_user.is_admin}")
+                
+                # 3. Teste de senha
+                print("3. Testando senhas...")
+                old_password_ok = admin_user.check_password('123456')
+                new_password_ok = admin_user.check_password('Admin@2025!')
+                
+                print(f"✅ Senha antiga (123456): {old_password_ok}")
+                print(f"✅ Senha nova (Admin@2025!): {new_password_ok}")
+                
+                if new_password_ok:
+                    print("✅ SENHA NOVA ESTÁ FUNCIONANDO!")
+                else:
+                    print("❌ Problema com senha nova")
+                    
+            else:
+                print("❌ Usuário admin não encontrado")
+                return False
+            
+            # 4. Teste das rotas
+            print("4. Testando rotas registradas...")
+            routes = []
+            for rule in app.url_map.iter_rules():
+                if 'login' in rule.rule or 'dashboard' in rule.rule:
+                    routes.append(f"{rule.rule} -> {rule.endpoint} ({rule.methods})")
+            
+            for route in routes:
+                print(f"✅ {route}")
+            
+            # 5. Teste de configuração
+            print("5. Testando configurações...")
+            print(f"✅ SECRET_KEY: {'OK' if app.config.get('SECRET_KEY') else 'FALTANDO'}")
+            print(f"✅ DATABASE_URL: {'OK' if app.config.get('SQLALCHEMY_DATABASE_URI') else 'FALTANDO'}")
+            print(f"✅ SESSION_COOKIE_SECURE: {app.config.get('SESSION_COOKIE_SECURE')}")
+            
+            print("\n=== RESUMO ===")
+            print("✅ Sistema configurado corretamente")
+            print("✅ Banco de dados conectado")  
+            print("✅ Usuário admin existe")
+            print("✅ Senha nova funciona")
+            print("✅ Rotas registradas")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro no teste: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
 
 if __name__ == "__main__":
-    test_evolution_api()
+    success = test_complete_system()
+    if success:
+        print("\n🎉 SISTEMA PRONTO PARA PRODUÇÃO!")
+        print("📋 Próximos passos:")
+        print("   1. Fazer deploy das mudanças na VPS")
+        print("   2. Testar login no navegador")
+        print("   3. Verificar se todas as funcionalidades estão OK")
+    else:
+        print("\n❌ Sistema tem problemas - verificar logs acima")

@@ -2,7 +2,7 @@ import os
 from flask import render_template, request, redirect, url_for, session, flash, jsonify
 from app import app
 from models import User
-# from utils import calculate_dashboard_stats
+from utils import calculate_dashboard_stats
 
 # Blueprints are registered in app.py to avoid conflicts
 
@@ -13,7 +13,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -32,7 +32,7 @@ def admin_required(f):
         user = get_current_user()
         if not user or not user.is_admin:
             flash('Acesso negado. Privilégios de administrador necessários.', 'error')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -46,59 +46,14 @@ def inject_user():
 def index():
     user = get_current_user()
     if user:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard.index'))
     return render_template('auth/login.html')
 
-@app.route('/login')
-def login():
-    return render_template('auth/login.html')
+# Login e register são tratados pelos blueprints em api/
+# Removidas rotas duplicadas
 
-@app.route('/register')
-def register():
-    return render_template('auth/register.html')
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    user = get_current_user()
-    stats = calculate_dashboard_stats(user.id)
-    return render_template('dashboard.html', stats=stats)
-
-@app.route('/clients')
-@login_required
-def clients():
-    return render_template('clients.html')
-
-@app.route('/receivables')
-@login_required
-def receivables():
-    return render_template('receivables.html')
-
-@app.route('/payables')
-@login_required
-def payables():
-    return render_template('payables.html')
-
-@app.route('/installment-sales')
-@login_required
-def installment_sales():
-    return render_template('installment_sales.html')
-
-@app.route('/whatsapp')
-@login_required
-def whatsapp():
-    return render_template('whatsapp.html')
-
-@app.route('/reminders')
-@login_required
-def reminders():
-    return render_template('reminders.html')
-
-@app.route('/admin')
-@login_required
-@admin_required
-def admin():
-    return render_template('admin.html')
+# Todas as rotas principais foram movidas para blueprints em api/
+# Mantendo apenas rotas básicas aqui
 
 @app.route('/confirm-sale/<token>')
 def confirm_sale(token):

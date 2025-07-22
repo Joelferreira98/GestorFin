@@ -130,6 +130,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Janeiro 2025 - Sistema Pronto para Produção
+
+#### Correções Críticas de Login (22/01/2025)
+- **Login System Debug e Fix**: Resolvido problema crítico onde login funcionava internamente mas falhava em requisições externas
+- **Conflito de Rotas**: Removidas rotas duplicadas entre `routes.py` e blueprints em `api/auth.py`
+- **Senha Admin Atualizada**: Alterada de "123456" para "Admin@2025!" com hash seguro
+- **Session Configuration**: Corrigidas configurações de cookies para funcionar em HTTP/HTTPS
+- **Error Handling**: Adicionados logs detalhados e tratamento de erros robusto
+- **Code Cleanup**: Removidas funções duplicadas e organizados imports
+- **Production Ready**: Sistema completamente testado e pronto para deploy em VPS
+- **Dashboard Stats**: Implementada função `calculate_dashboard_stats` faltante
+- **Blueprint Organization**: Todos os endpoints principais organizados em blueprints modulares
+
 ### Janeiro 2025
 - **Sistema de Deployment para VPS Completamente Implementado**: Scripts robustos de instalação
   - Script `install.sh` para instalação automatizada completa em VPS

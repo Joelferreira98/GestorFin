@@ -14,9 +14,26 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
+        logging.info(f"Login attempt: username={username}")
+        
+        if not username or not password:
+            logging.warning("Missing username or password")
+            flash('Por favor, preencha todos os campos.', 'error')
+            return render_template('auth/login.html')
+        
         user = User.query.filter_by(username=username).first()
         
-        if user and user.check_password(password):
+        if not user:
+            logging.warning(f"User not found: {username}")
+            flash('Usuário ou senha inválidos!', 'error')
+            return render_template('auth/login.html')
+        
+        logging.info(f"User found: {user.username} (ID: {user.id})")
+        
+        password_valid = user.check_password(password)
+        logging.info(f"Password check result: {password_valid}")
+        
+        if password_valid:
             # Buscar plano do usuário
             user_plan = UserPlan.query.filter_by(user_id=user.id).first()
             user_plan_name = user_plan.plan_name if user_plan else 'Free'
@@ -26,9 +43,11 @@ def login():
             session['is_admin'] = user.is_admin
             session['user_plan_name'] = user_plan_name
             
+            logging.info(f"Login successful for user: {username}")
             flash('Login realizado com sucesso!', 'success')
             return redirect(url_for('dashboard.index'))
         else:
+            logging.warning(f"Invalid password for user: {username}")
             flash('Usuário ou senha inválidos!', 'error')
     
     return render_template('auth/login.html')

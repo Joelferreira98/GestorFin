@@ -281,3 +281,85 @@ def send_admin_whatsapp_message(phone, message):
     except Exception as e:
         logging.error(f"Error sending admin WhatsApp message: {str(e)}")
         return False
+
+def calculate_dashboard_stats(user_id):
+    """Calculate dashboard statistics for a user"""
+    from models import Client, Receivable, Payable, InstallmentSale
+    from datetime import datetime
+    from sqlalchemy import func
+    
+    stats = {
+        'total_clients': 0,
+        'total_receivables': 0,
+        'total_payables': 0,
+        'overdue_receivables': 0,
+        'pending_receivables': 0,
+        'paid_receivables': 0,
+        'overdue_payables': 0,
+        'pending_payables': 0,
+        'paid_payables': 0,
+        'total_installment_sales': 0,
+        'revenue_this_month': 0,
+        'expenses_this_month': 0
+    }
+    
+    try:
+        # Total clients
+        stats['total_clients'] = Client.query.filter_by(user_id=user_id).count()
+        
+        # Receivables stats
+        receivables = Receivable.query.filter_by(user_id=user_id).all()
+        stats['total_receivables'] = len(receivables)
+        
+        today = datetime.now().date()
+        for r in receivables:
+            if r.status == 'paid':
+                stats['paid_receivables'] += 1
+            elif r.status == 'pending':
+                if r.due_date and r.due_date < today:
+                    stats['overdue_receivables'] += 1
+                else:
+                    stats['pending_receivables'] += 1
+        
+        # Payables stats
+        payables = Payable.query.filter_by(user_id=user_id).all()
+        stats['total_payables'] = len(payables)
+        
+        for p in payables:
+            if p.status == 'paid':
+                stats['paid_payables'] += 1
+            elif p.status == 'pending':
+                if p.due_date and p.due_date < today:
+                    stats['overdue_payables'] += 1
+                else:
+                    stats['pending_payables'] += 1
+        
+        # Installment sales
+        stats['total_installment_sales'] = InstallmentSale.query.filter_by(user_id=user_id).count()
+        
+        # Monthly revenue/expenses (simplified)
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        
+        monthly_receivables = Receivable.query.filter(
+            Receivable.user_id == user_id,
+            Receivable.status == 'paid',
+            func.extract('month', Receivable.payment_date) == current_month,
+            func.extract('year', Receivable.payment_date) == current_year
+        ).all()
+        
+        stats['revenue_this_month'] = sum(r.amount for r in monthly_receivables)
+        
+        monthly_payables = Payable.query.filter(
+            Payable.user_id == user_id,
+            Payable.status == 'paid',
+            func.extract('month', Payable.payment_date) == current_month,
+            func.extract('year', Payable.payment_date) == current_year
+        ).all()
+        
+        stats['expenses_this_month'] = sum(p.amount for p in monthly_payables)
+        
+    except Exception as e:
+        logging.error(f"Error calculating dashboard stats: {str(e)}")
+    
+    return stats
