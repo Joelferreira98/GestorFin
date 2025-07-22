@@ -28,7 +28,15 @@ chmod +x update.sh
 sudo ./update.sh
 ```
 
-3. **Desinstalação (se necessário)**:
+3. **Resolução de Conflitos Git**:
+```bash
+# Se houver conflitos durante atualizações
+wget -O resolve-conflicts.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/resolve-conflicts.sh
+chmod +x resolve-conflicts.sh
+sudo ./resolve-conflicts.sh
+```
+
+4. **Desinstalação (se necessário)**:
 ```bash
 # Baixar e executar o script de desinstalação
 wget -O uninstall.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/uninstall.sh

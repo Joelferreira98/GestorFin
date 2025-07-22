@@ -130,8 +130,24 @@ update_application() {
     
     cd "$APP_DIR"
     
-    log "Fazendo pull das últimas mudanças..."
-    git pull origin main || error "Erro ao atualizar código"
+    # Verificar conflitos e resolvê-los
+    log "Verificando conflitos..."
+    if ! git pull origin main 2>/dev/null; then
+        warn "Conflitos detectados, resolvendo automaticamente..."
+        
+        # Fazer stash das mudanças locais
+        git stash push -m "Backup antes da atualização - $(date)"
+        
+        # Remover arquivos não rastreados que podem causar conflitos
+        git clean -fd
+        
+        # Tentar pull novamente
+        git pull origin main || error "Erro ao atualizar código após resolução de conflitos"
+        
+        log "✅ Conflitos resolvidos automaticamente"
+    else
+        log "✅ Atualização sem conflitos"
+    fi
     
     # Verificar se existe requirements atualizado
     if [[ -f "requirements.production.txt" ]]; then
