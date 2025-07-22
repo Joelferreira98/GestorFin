@@ -309,10 +309,16 @@ except Exception as e:
     fi
     
     echo
-    echo "📋 SCRIPTS DE DIAGNÓSTICO DISPONÍVEIS:"
-    echo "• wget -O check-install.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/check-install.sh"
+    echo "📋 SCRIPTS DE DIAGNÓSTICO E CORREÇÃO:"
+    echo "• Dependências Python:"
+    echo "  wget -O fix-dependencies.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/fix-dependencies.sh"
+    echo "  chmod +x fix-dependencies.sh && sudo ./fix-dependencies.sh"
+    echo
+    echo "• Diagnóstico completo:"
+    echo "  wget -O check-install.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/check-install.sh"
     echo "  chmod +x check-install.sh && sudo ./check-install.sh"
     echo
-    echo "• wget -O test-requirements.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/test-requirements.sh"
+    echo "• Teste de dependências:"
+    echo "  wget -O test-requirements.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/test-requirements.sh"
     echo "  chmod +x test-requirements.sh && sudo ./test-requirements.sh"
 fi

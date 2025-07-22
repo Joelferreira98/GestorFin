@@ -38,6 +38,14 @@ chmod +x install-fix.sh
 sudo ./install-fix.sh
 ```
 
+3.1. **Correção Específica de Dependências Python**:
+```bash
+# Se houver erro "ModuleNotFoundError: No module named 'flask'"
+wget -O fix-dependencies.sh https://raw.githubusercontent.com/Joelferreira98/GestorFin/main/fix-dependencies.sh
+chmod +x fix-dependencies.sh
+sudo ./fix-dependencies.sh
+```
+
 4. **Diagnóstico Completo**:
 ```bash
 # Para diagnóstico detalhado de problemas
