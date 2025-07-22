@@ -1,0 +1,47 @@
+# FinanceiroMax - Dependências de Produção
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+SQLAlchemy==2.0.23
+Werkzeug==3.0.1
+
+# Database
+PyMySQL==1.1.0
+mysqlclient==2.2.4
+psycopg2-binary==2.9.9
+
+# Production Server
+gunicorn==21.2.0
+
+# Image Processing
+Pillow==10.1.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Date/Time
+python-dateutil==2.8.2
+
+# QR Codes
+qrcode[pil]==7.4.2
+
+# JWT for API
+PyJWT==2.8.0
+
+# Email validation
+email-validator==2.1.0
+
+# Security
+cryptography==41.0.8
+
+# Task scheduling
+APScheduler==3.10.4
+
+# OpenAI
+openai==1.3.8
+
+# Phone validation
+phonenumbers==8.13.26
+
+# Environment
+python-dotenv==1.0.0

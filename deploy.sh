@@ -44,11 +44,17 @@ log "Backup criado em: $BACKUP_DIR"
 log "Parando serviço..."
 sudo systemctl stop "$SERVICE_NAME" || warn "Serviço já estava parado"
 
-# Atualizar dependências se requirements.txt mudou
-if [[ requirements.txt -nt venv/pyvenv.cfg ]]; then
+# Detectar arquivo de requirements
+REQUIREMENTS_FILE="requirements.txt"
+if [[ -f requirements.production.txt ]]; then
+    REQUIREMENTS_FILE="requirements.production.txt"
+fi
+
+# Atualizar dependências se requirements mudou
+if [[ $REQUIREMENTS_FILE -nt venv/pyvenv.cfg ]] || [[ ! -f venv/pyvenv.cfg ]]; then
     log "Atualizando dependências Python..."
     venv/bin/pip install --upgrade pip
-    venv/bin/pip install -r requirements.txt
+    venv/bin/pip install -r $REQUIREMENTS_FILE
 fi
 
 # Executar migrações se necessário

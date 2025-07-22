@@ -274,11 +274,21 @@ df -h
 
 ### Comandos Úteis
 ```bash
+# Verificar instalação completa
+./check-install.sh
+
+# Atualizar sistema
+sudo -u financeiro ./deploy.sh
+
 # Reiniciar aplicação
 sudo systemctl restart financeiro-max
 
-# Recarregar Nginx
-sudo systemctl reload nginx
+# Ver logs em tempo real
+sudo journalctl -u financeiro-max -f
+
+# Ver recursos do sistema
+htop
+df -h
 
 # Ver conexões ativas
 ss -tulpn | grep :5000

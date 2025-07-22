@@ -217,7 +217,42 @@ sudo -u $APP_USER $APP_DIR/venv/bin/pip install --upgrade pip
 
 # Instalar dependências Python
 log "Instalando dependências Python..."
-sudo -u $APP_USER $APP_DIR/venv/bin/pip install -r requirements.txt
+
+# Criar requirements.txt se não existir
+if [[ ! -f requirements.txt ]] && [[ ! -f requirements.production.txt ]]; then
+    log "Criando arquivo requirements.txt..."
+    sudo -u $APP_USER tee $APP_DIR/requirements.txt > /dev/null << 'EOF'
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+SQLAlchemy==2.0.23
+Werkzeug==3.0.1
+PyMySQL==1.1.0
+mysqlclient==2.2.4
+psycopg2-binary==2.9.9
+gunicorn==21.2.0
+Pillow==10.1.0
+requests==2.31.0
+python-dateutil==2.8.2
+qrcode[pil]==7.4.2
+PyJWT==2.8.0
+email-validator==2.1.0
+cryptography==41.0.8
+APScheduler==3.10.4
+openai==1.3.8
+phonenumbers==8.13.26
+python-dotenv==1.0.0
+EOF
+fi
+
+# Usar requirements.production.txt se existir, senão requirements.txt
+REQUIREMENTS_FILE="requirements.txt"
+if [[ -f requirements.production.txt ]]; then
+    REQUIREMENTS_FILE="requirements.production.txt"
+fi
+
+log "Instalando dependências do arquivo: $REQUIREMENTS_FILE"
+sudo -u $APP_USER $APP_DIR/venv/bin/pip install -r $REQUIREMENTS_FILE
 
 # Criar arquivo .env
 log "Criando arquivo de configuração..."

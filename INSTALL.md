@@ -40,9 +40,20 @@ sudo apt install -y git
 git clone https://github.com/seu-usuario/financeiro-max.git
 cd financeiro-max
 
-# Tornar executável e instalar
+# Tornar executáveis
 chmod +x install.sh
+chmod +x install-quick.sh
+chmod +x deploy.sh
+chmod +x check-install.sh
+
+# Executar instalação completa
 ./install.sh
+```
+
+#### Passo 3: Verificar Instalação
+```bash
+# Após a instalação, execute verificação
+./check-install.sh
 ```
 
 #### Passo 3: Seguir Assistente Interativo
@@ -165,6 +176,17 @@ sudo tail -f /var/log/nginx/error.log
 
 ## Solução de Problemas Comuns
 
+### Erro: "Could not open requirements file"
+```bash
+# O sistema agora cria automaticamente o requirements.txt
+# Se ainda houver problemas, copie manualmente:
+cp requirements.production.txt requirements.txt
+
+# Ou reinstale dependências:
+cd /opt/financeiro-max
+sudo -u financeiro venv/bin/pip install -r requirements.production.txt
+```
+
 ### Erro: "MySQL connection failed"
 ```bash
 # Verificar serviço MySQL
@@ -174,6 +196,9 @@ sudo systemctl status mysql
 sudo mysql -u root -p
 > SHOW DATABASES;
 > SELECT User FROM mysql.user;
+
+# Testar configuração específica
+python3 mysql_setup.py
 ```
 
 ### Erro: "Permission denied"
