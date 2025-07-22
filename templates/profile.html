@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - FinanceiroMax{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-user-circle me-2"></i>Meu Perfil</h2>
+            <p class="text-muted">Gerencie suas informações pessoais e configurações de conta</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Foto de Perfil -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern shadow">
+                <div class="card-header py-3">
+                    <h6 class="card-title">
+                        <i class="fas fa-camera me-2"></i>Foto de Perfil
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="profile-photo-container mb-3">
+                        {% if user.profile_photo %}
+                            <img src="{{ url_for('static', filename=user.profile_photo) }}" 
+                                 alt="Foto de perfil" 
+                                 class="profile-photo-large">
+                        {% else %}
+                            <div class="profile-photo-placeholder">
+                                <i class="fas fa-user fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('profile.upload_photo') }}" enctype="multipart/form-data" class="mb-3">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" id="profile_photo" name="profile_photo" 
+                                   accept="image/*" onchange="previewImage(this)">
+                            <div class="form-text">PNG, JPG, JPEG, GIF ou WebP (máx. 5MB)</div>
+                        </div>
+                        <button type="submit" class="btn-modern btn-primary-modern btn-sm">
+                            <i class="fas fa-upload me-1"></i>Alterar Foto
+                        </button>
+                    </form>
+                    
+                    {% if user.profile_photo %}
+                    <form method="POST" action="{{ url_for('profile.remove_photo') }}" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                onclick="return confirm('Deseja remover a foto de perfil?')">
+                            <i class="fas fa-trash me-1"></i>Remover
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informações Pessoais -->
+        <div class="col-lg-8 mb-4">
+            <div class="card-modern shadow">
+                <div class="card-header py-3">
+                    <h6 class="card-title">
+                        <i class="fas fa-edit me-2"></i>Informações Pessoais
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile.update') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Nome de Usuário *</label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ user.username }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Telefone</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ user.phone or '' }}" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Membro desde</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ user.created_at.strftime('%d/%m/%Y às %H:%M') }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-modern btn-primary-modern">
+                            <i class="fas fa-save me-1"></i>Salvar Informações
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alteração de Senha -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card-modern shadow">
+                <div class="card-header py-3">
+                    <h6 class="card-title">
+                        <i class="fas fa-lock me-2"></i>Alterar Senha
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile.update_password') }}">
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Senha Atual *</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="new_password" class="form-label">Nova Senha *</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password" 
+                                       minlength="6" required>
+                                <div class="form-text">Mínimo de 6 caracteres</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirmar Nova Senha *</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                       minlength="6" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-modern btn-warning-modern">
+                            <i class="fas fa-key me-1"></i>Alterar Senha
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas da Conta -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern shadow">
+                <div class="card-header py-3">
+                    <h6 class="card-title">
+                        <i class="fas fa-chart-bar me-2"></i>Estatísticas da Conta
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-users text-primary me-2"></i>Clientes</span>
+                            <strong>{{ user.clients|length }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-arrow-up text-success me-2"></i>Contas a Receber</span>
+                            <strong>{{ user.receivables|length }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-arrow-down text-warning me-2"></i>Contas a Pagar</span>
+                            <strong>{{ user.payables|length }}</strong>
+                        </div>
+                    </div>
+                    
+                    {% if user.is_admin %}
+                    <div class="stat-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-crown text-warning me-2"></i>Permissão</span>
+                            <span class="badge bg-warning">Admin</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.profile-photo-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--border-color);
+}
+
+.profile-photo-placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: var(--background-secondary);
+    border: 4px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.profile-photo-container {
+    position: relative;
+    display: inline-block;
+}
+
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const container = document.querySelector('.profile-photo-container');
+            container.innerHTML = '<img src="' + e.target.result + '" alt="Preview" class="profile-photo-large">';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Validação de confirmação de senha
+document.addEventListener('DOMContentLoaded', function() {
+    const newPassword = document.getElementById('new_password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    function validatePassword() {
+        if (newPassword.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('As senhas não coincidem');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+    
+    if (newPassword && confirmPassword) {
+        newPassword.addEventListener('input', validatePassword);
+        confirmPassword.addEventListener('input', validatePassword);
+    }
+});
+</script>
+{% endblock %}

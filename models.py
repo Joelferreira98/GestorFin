@@ -12,6 +12,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     phone = db.Column(db.String(20))
+    profile_photo = db.Column(db.String(200))  # Caminho para foto de perfil
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

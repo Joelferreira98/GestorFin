@@ -34,6 +34,7 @@ Preferred communication style: Simple, everyday language.
 - **Multi-user system**: Suporte completo a múltiplos usuários
 - **Role-based access**: Sistema de permissões com usuários admin e regulares
 - **Session management**: Controle de sessões Flask com logout automático
+- **Profile management**: Sistema completo de edição de perfil com upload de fotos
 
 ### Financial Management
 - **Receivables**: Gestão de contas a receber com status e vencimentos
@@ -134,5 +135,13 @@ Preferred communication style: Simple, everyday language.
   - Análise de risco de inadimplência de clientes
   - Insights estratégicos para otimização do negócio
   - Interface dedicada em `/ai_insights/` no menu principal
+
+- **Sistema de Perfil de Usuário Implementado**: Gestão completa de perfil pessoal
+  - Edição de nome de usuário, email e telefone
+  - Alteração de senha com validação segura
+  - Upload e gestão de foto de perfil com redimensionamento automático
+  - Remoção de fotos antigas automaticamente
+  - Estatísticas da conta na página de perfil
+  - Interface acessível via menu dropdown do usuário
 
 The system is designed as a comprehensive financial management solution with modern web technologies, PWA capabilities, AI-powered financial insights, and extensive integration possibilities, particularly focused on the Brazilian market with CPF/CNPJ validation and WhatsApp integration.
