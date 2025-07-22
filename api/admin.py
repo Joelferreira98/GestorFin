@@ -212,6 +212,56 @@ def test_evolution_api():
     
     return redirect(url_for('admin.index'))
 
+@admin_bp.route('/users/<int:user_id>/change_plan', methods=['POST'])
+@admin_required
+def change_user_plan(user_id):
+    """Admin pode alterar plano de qualquer usuário com período personalizado"""
+    user = User.query.get_or_404(user_id)
+    
+    plan_name = request.form.get('plan_name')
+    days_duration = request.form.get('days_duration', type=int)
+    
+    if not plan_name or plan_name not in ['Free', 'Premium']:
+        flash('Plano inválido!', 'error')
+        return redirect(url_for('admin.index'))
+    
+    # Buscar ou criar plano do usuário
+    user_plan = UserPlan.query.filter_by(user_id=user.id).first()
+    if not user_plan:
+        user_plan = UserPlan(user_id=user.id)
+        db.session.add(user_plan)
+    
+    # Configurações do plano
+    if plan_name == 'Free':
+        user_plan.plan_name = 'Free'
+        user_plan.max_clients = 5
+        user_plan.max_receivables = 20
+        user_plan.max_payables = 20
+        user_plan.expires_at = None
+        flash(f'Usuário {user.username} alterado para plano Gratuito!', 'success')
+    else:  # Premium
+        user_plan.plan_name = 'Premium'
+        user_plan.max_clients = 999999
+        user_plan.max_receivables = 999999
+        user_plan.max_payables = 999999
+        
+        if days_duration and days_duration > 0:
+            user_plan.expires_at = datetime.utcnow() + timedelta(days=days_duration)
+            flash(f'Usuário {user.username} alterado para plano Premium por {days_duration} dias!', 'success')
+        else:
+            user_plan.expires_at = datetime.utcnow() + timedelta(days=30)  # Padrão 30 dias
+            flash(f'Usuário {user.username} alterado para plano Premium por 30 dias!', 'success')
+    
+    user_plan.is_active = True
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao alterar plano: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.index'))
+
 @admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @admin_required
 def delete_user(user_id):

@@ -141,11 +141,9 @@
                             </button>
                         </form>
                     {% else %}
-                        <form method="POST" action="{{ url_for('plans.upgrade', plan_name=plan_id) }}" style="display: inline;">
-                            <button type="submit" class="btn-modern btn-primary-modern">
-                                <i class="fas fa-star me-1"></i>Fazer Upgrade
-                            </button>
-                        </form>
+                        <a href="{{ url_for('plans.request_upgrade', plan_name=plan_id) }}" class="btn-modern btn-primary-modern" target="_blank">
+                            <i class="fab fa-whatsapp me-1"></i>Solicitar via WhatsApp
+                        </a>
                     {% endif %}
                 </div>
             </div>

@@ -68,10 +68,10 @@ def index():
                          user_plan=user_plan,
                          usage_stats=usage_stats)
 
-@plans_bp.route('/upgrade/<plan_name>', methods=['POST'])
+@plans_bp.route('/request_upgrade/<plan_name>')
 @login_required
-def upgrade(plan_name):
-    """Fazer upgrade para um plano"""
+def request_upgrade(plan_name):
+    """Solicitar upgrade de plano via WhatsApp do admin"""
     user = get_current_user()
     if not user:
         return redirect(url_for('auth.login'))
@@ -79,6 +79,73 @@ def upgrade(plan_name):
     if plan_name not in PLANS:
         flash('Plano inválido!', 'error')
         return redirect(url_for('plans.index'))
+    
+    # Buscar número do admin
+    from models import User, UserWhatsAppInstance
+    admin_user = User.query.filter_by(is_admin=True).first()
+    if not admin_user:
+        flash('Admin não encontrado. Contate o suporte.', 'error')
+        return redirect(url_for('plans.index'))
+    
+    admin_instance = UserWhatsAppInstance.query.filter_by(
+        user_id=admin_user.id,
+        status='connected'
+    ).first()
+    
+    if not admin_instance or not admin_instance.phone_number:
+        flash('WhatsApp do admin não configurado. Contate o suporte.', 'error')
+        return redirect(url_for('plans.index'))
+    
+    # Formatar número do admin para WhatsApp
+    admin_phone = admin_instance.phone_number
+    if not admin_phone.startswith('55'):
+        admin_phone = '55' + admin_phone
+    
+    # Mensagem personalizada para o admin
+    plan_info = PLANS[plan_name]
+    current_plan = UserPlan.query.filter_by(user_id=user.id).first()
+    current_plan_name = current_plan.plan_name if current_plan else 'Free'
+    
+    message = f"""🔄 *Solicitação de Mudança de Plano*
+
+👤 *Usuário:* {user.username}
+📧 *Email:* {user.email}
+📱 *Telefone:* {user.phone or 'Não informado'}
+
+📊 *Plano Atual:* {current_plan_name}
+🎯 *Plano Solicitado:* {plan_info['name']}
+💰 *Valor:* R$ {plan_info['price']:.2f}/mês
+
+📋 *Recursos do plano:*
+{chr(10).join(['• ' + feature for feature in plan_info['features'][:5]])}
+
+Para aprovar, acesse o painel admin e altere o plano do usuário.
+
+---
+*FinanceiroMax - Solicitação Automática*"""
+    
+    # URL do WhatsApp com mensagem pré-formatada
+    import urllib.parse
+    encoded_message = urllib.parse.quote(message)
+    whatsapp_url = f"https://wa.me/{admin_phone}?text={encoded_message}"
+    
+    return redirect(whatsapp_url)
+
+@plans_bp.route('/upgrade/<plan_name>', methods=['POST'])
+@login_required
+def upgrade(plan_name):
+    """Fazer upgrade para um plano (apenas para downgrade para Free)"""
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('auth.login'))
+    
+    if plan_name not in PLANS:
+        flash('Plano inválido!', 'error')
+        return redirect(url_for('plans.index'))
+    
+    # Apenas permitir mudança para plano gratuito diretamente
+    if plan_name != 'Free':
+        return redirect(url_for('plans.request_upgrade', plan_name=plan_name))
     
     # Buscar ou criar plano do usuário
     user_plan = UserPlan.query.filter_by(user_id=user.id).first()
@@ -94,15 +161,9 @@ def upgrade(plan_name):
     user_plan.max_receivables = plan_config['max_receivables']
     user_plan.max_payables = plan_config['max_payables']
     user_plan.is_active = True
+    user_plan.expires_at = None  # Plano gratuito não expira
     
-    if plan_name == 'Premium':
-        # Para plano Premium, definir expiração em 30 dias
-        user_plan.expires_at = datetime.utcnow() + timedelta(days=30)
-        flash('Upgrade realizado com sucesso! Seu plano Premium expira em 30 dias.', 'success')
-    else:
-        # Para plano gratuito, remover expiração
-        user_plan.expires_at = None
-        flash('Plano alterado com sucesso!', 'success')
+    flash('Plano alterado para Gratuito com sucesso!', 'success')
     
     try:
         db.session.commit()
