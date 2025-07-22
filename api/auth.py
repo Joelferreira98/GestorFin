@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from models import User, UserPlan, PhoneConfirmationToken
-from utils import login_required, get_current_user, send_admin_whatsapp_message
+from utils import login_required, get_current_user, send_admin_whatsapp_message, get_system_domain
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -94,7 +94,7 @@ Olá *{username}*! Sua conta foi criada com sucesso.
 🔑 *Código de confirmação:* `{token_code}`
 
 Para confirmar seu número WhatsApp, acesse:
-{request.url_root}auth/confirm_phone/{token_code}
+{get_system_domain()}auth/confirm_phone/{token_code}
 
 ✅ Após a confirmação, você terá acesso completo ao sistema!
 

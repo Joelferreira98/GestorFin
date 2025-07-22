@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from app import db
 from models import InstallmentSale, Client, Receivable, WhatsAppMessage
-from utils import login_required, get_current_user, send_whatsapp_message
+from utils import login_required, get_current_user, send_whatsapp_message, generate_system_url
 from datetime import datetime, timedelta
 import uuid
 import os
@@ -44,7 +44,7 @@ def add():
     # Send WhatsApp confirmation link
     client = Client.query.get(client_id)
     if client and client.whatsapp:
-        confirmation_url = url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)
+        confirmation_url = generate_system_url('installment_sales.confirm_public', token=sale.confirmation_token)
         message = f"Olá {client.name}! Você tem uma venda parcelada para confirmar. Acesse: {confirmation_url}"
         
         # Actually send the message via WhatsApp
@@ -188,7 +188,7 @@ def reject(sale_id):
     client = Client.query.get(sale.client_id)
     if client and client.whatsapp:
         if send_new_link:
-            confirmation_url = url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)
+            confirmation_url = generate_system_url('installment_sales.confirm_public', token=sale.confirmation_token)
             message = f"Olá {client.name}! Sua venda parcelada foi REJEITADA. Motivo: {rejection_notes}\n\nVocê pode enviar um novo documento através deste link: {confirmation_url}"
         else:
             message = f"Olá {client.name}! Infelizmente sua venda parcelada foi REJEITADA. Motivo: {rejection_notes}"

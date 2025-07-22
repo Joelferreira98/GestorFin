@@ -125,6 +125,41 @@ def format_phone(phone):
     
     return phone
 
+def get_system_domain():
+    """Get configured system domain from admin settings"""
+    from models import SystemSettings
+    
+    try:
+        system_settings = SystemSettings.query.first()
+        if system_settings and system_settings.system_domain:
+            domain = system_settings.system_domain.strip()
+            if not domain.startswith(('http://', 'https://')):
+                domain = 'https://' + domain
+            if not domain.endswith('/'):
+                domain += '/'
+            return domain
+    except Exception:
+        pass
+    
+    # Fallback para desenvolvimento
+    return 'https://localhost:5000/'
+
+def generate_system_url(endpoint, **kwargs):
+    """Generate URL using system domain instead of request domain"""
+    from flask import url_for
+    
+    # Generate relative URL
+    relative_url = url_for(endpoint, **kwargs)
+    
+    # Combine with system domain
+    system_domain = get_system_domain()
+    
+    # Remove leading slash from relative URL since system_domain ends with /
+    if relative_url.startswith('/'):
+        relative_url = relative_url[1:]
+    
+    return f"{system_domain}{relative_url}"
+
 def send_whatsapp_message(user_id, phone, message):
     """Send WhatsApp message via Evolution API"""
     from models import SystemSettings, UserWhatsAppInstance

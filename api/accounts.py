@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app import db
 from models import Receivable, Payable, Client, Supplier, UserPlan, InstallmentSale, WhatsAppMessage
-from utils import login_required, get_current_user, send_whatsapp_message
+from utils import login_required, get_current_user, send_whatsapp_message, generate_system_url
 from datetime import datetime, timedelta
 import uuid
 
@@ -159,7 +159,7 @@ def add_receivable():
             # Enviar link de confirmação via WhatsApp
             client = Client.query.get(client_id)
             if client and client.whatsapp:
-                confirmation_url = url_for('installment_sales.confirm_public', token=sale.confirmation_token, _external=True)
+                confirmation_url = generate_system_url('installment_sales.confirm_public', token=sale.confirmation_token)
                 message = f"Olá {client.name}! Você tem uma venda parcelada para confirmar. Acesse: {confirmation_url}"
                 
                 success = send_whatsapp_message(user.id, client.whatsapp, message)
