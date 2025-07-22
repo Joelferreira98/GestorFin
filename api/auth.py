@@ -125,13 +125,23 @@ _Este código expira em 24 horas._
 @auth_bp.route('/confirm_phone/<token>')
 def confirm_phone(token):
     """Confirmar número de telefone com token enviado via WhatsApp"""
+    logging.info(f"Attempting to confirm phone with token: {token}")
+    
+    # Buscar token
     confirmation_token = PhoneConfirmationToken.query.filter_by(
         token=token, 
         is_used=False
     ).first()
     
+    logging.info(f"Token found: {confirmation_token is not None}")
+    
     if not confirmation_token:
-        flash('Código de confirmação inválido!', 'error')
+        # Verificar se o token existe mas já foi usado
+        used_token = PhoneConfirmationToken.query.filter_by(token=token).first()
+        if used_token:
+            flash('Este código já foi utilizado!', 'warning')
+        else:
+            flash('Código de confirmação inválido!', 'error')
         return redirect(url_for('auth.login'))
     
     if confirmation_token.is_expired():
